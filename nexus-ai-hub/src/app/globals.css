@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #F4F2EE;
+  --bg2: #ECEAE4;
+  --bg3: #E4E1D8;
+  --white: #FFFFFF;
+  --text: #1C1A16;
+  --text2: #5A5750;
+  --text3: #9E9B93;
+  --accent: #C8622A;
+  --accent2: #A34D1E;
+  --accent-lt: #FDF1EB;
+  --accent-border: rgba(200,98,42,0.25);
+  --blue: #1E4DA8;
+  --blue-lt: #EBF0FC;
+  --teal: #0A5E49;
+  --teal-lt: #E2F5EF;
+  --amber: #8A5A00;
+  --amber-lt: #FDF5E0;
+  --rose: #9B2042;
+  --rose-lt: #FDEDF1;
+  --green: #2E9E5B;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  margin: 0;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.14);
+  border-radius: 10px;
+}
+
+/* Utility classes mapped to CSS variables */
+.bg-bg { background: var(--bg); }
+.bg-bg2 { background: var(--bg2); }
+.bg-bg3 { background: var(--bg3); }
+.bg-accent { background: var(--accent); }
+.bg-accent2 { background: var(--accent2); }
+.bg-accent-lt { background: var(--accent-lt); }
+.bg-blue { background: var(--blue); }
+.bg-blue-lt { background: var(--blue-lt); }
+.bg-teal { background: var(--teal); }
+.bg-teal-lt { background: var(--teal-lt); }
+.bg-amber { background: var(--amber); }
+.bg-amber-lt { background: var(--amber-lt); }
+.bg-rose { background: var(--rose); }
+.bg-rose-lt { background: var(--rose-lt); }
+.bg-green { background: var(--green); }
+.bg-text1 { background: var(--text); }
+
+.text-text1 { color: var(--text); }
+.text-text2 { color: var(--text2); }
+.text-text3 { color: var(--text3); }
+.text-accent { color: var(--accent); }
+.text-accent2 { color: var(--accent2); }
+.text-blue { color: var(--blue); }
+.text-teal { color: var(--teal); }
+.text-amber { color: var(--amber); }
+.text-rose { color: var(--rose); }
+.text-green { color: var(--green); }
+.text-white { color: #fff; }
+
+.border-accent { border-color: var(--accent); }
+.border-accent2 { border-color: var(--accent2); }
+.border-blue { border-color: var(--blue); }
+.border-teal { border-color: var(--teal); }
+
+.hover\:bg-accent:hover { background: var(--accent); }
+.hover\:bg-accent2:hover { background: var(--accent2); }
+.hover\:bg-accent-lt:hover { background: var(--accent-lt); }
+.hover\:bg-bg2:hover { background: var(--bg2); }
+.hover\:bg-bg3:hover { background: var(--bg3); }
+.hover\:text-accent:hover { color: var(--accent); }
+.hover\:text-text1:hover { color: var(--text); }
+.hover\:border-accent:hover { border-color: var(--accent); }
+.hover\:border-blue:hover { border-color: var(--blue); }
+
+.font-syne { font-family: 'Syne', sans-serif; }
+.font-instrument { font-family: 'Instrument Sans', sans-serif; }
+
+.shadow-card { box-shadow: 0 1px 4px rgba(0,0,0,0.07),0 4px 16px rgba(0,0,0,0.04); }
+.shadow-md { box-shadow: 0 2px 12px rgba(0,0,0,0.09),0 8px 32px rgba(0,0,0,0.05); }
+.shadow-lg { box-shadow: 0 8px 40px rgba(0,0,0,0.13); }
+
+.rounded-sm { border-radius: 8px; }
+.rounded { border-radius: 12px; }
+.rounded-lg { border-radius: 20px; }
+.rounded-xl { border-radius: 28px; }
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* Badge colors */
+.badge-new { background: var(--teal-lt); color: var(--teal); }
+.badge-hot { background: var(--accent-lt); color: var(--accent); }
+.badge-open { background: var(--blue-lt); color: var(--blue); }
+.badge-beta { background: var(--amber-lt); color: var(--amber); }
+
+/* Tag colors */
+.t-blue { background: var(--blue-lt); color: var(--blue); }
+.t-teal { background: var(--teal-lt); color: var(--teal); }
+.t-amber { background: var(--amber-lt); color: var(--amber); }
+.t-rose { background: var(--rose-lt); color: var(--rose); }
+.t-accent { background: var(--accent-lt); color: var(--accent); }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.75); }
+}
+.animate-pulse-dot { animation: pulse-dot 2s infinite; }
