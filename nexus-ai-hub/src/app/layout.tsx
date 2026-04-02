@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import StoreProvider from '@/providers/StoreProvider';
+import LocalizationProvider from '@/providers/LocalizationProvider';
 
 export const metadata: Metadata = {
   title: 'NexusAI — AI Model Marketplace · Discover, Compare & Deploy',
@@ -12,7 +13,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <StoreProvider>
-          {children}
+          <LocalizationProvider>
+            {children}
+          </LocalizationProvider>
         </StoreProvider>
       </body>
     </html>

@@ -7,15 +7,7 @@ import { addMessage, setIsTyping, setOnboardPhase, setObDone, ChatAttachment } f
 import { showToast } from '@/store/appSlice';
 import { motion } from 'framer-motion';
 import { apiChatMessage, Model } from '@/lib/api';
-
-const CATEGORY_TABS = [
-  { id: 'usecases', label: '⚡ Use Cases', prompts: ['Summarise this document', 'Write a product description', 'Create a content calendar', 'Draft a professional email'] },
-  { id: 'code',     label: '💻 Code',      prompts: ['Review my code for bugs', 'Write unit tests', 'Explain this algorithm', 'Optimise this SQL query'] },
-  { id: 'analyze',  label: '📊 Analyze',   prompts: ['Analyze this dataset', 'Find patterns in this data', 'Compare these two approaches', 'Create a SWOT analysis'] },
-  { id: 'create',   label: '✍️ Create',    prompts: ['Write a blog post about', 'Create social media captions', 'Draft a press release', 'Write ad copy for'] },
-  { id: 'learn',    label: '🎓 Learn',     prompts: ['Explain quantum computing', 'Teach me about transformers', 'What is RAG in AI?', 'How does RLHF work?'] },
-];
-
+import { useTranslation } from 'react-i18next';
 import { FiSend, FiMic, FiPaperclip, FiImage, FiX } from 'react-icons/fi';
 
 type SpeechRecognitionEventLike = Event & {
@@ -43,8 +35,16 @@ type WindowWithSpeech = Window & {
   webkitSpeechRecognition?: SpeechRecognitionCtor;
 };
 
+const getCategoryTabs = (t: any) => [
+  { id: 'usecases', label: `⚡ ${t('chat.area.modes.usecases')}`, prompts: [t('chat.area.suggestions.summarise'), t('chat.area.suggestions.product_desc'), t('chat.area.suggestions.content_calendar'), t('chat.area.suggestions.pro_email')] },
+  { id: 'code',     label: `💻 ${t('chat.area.modes.code')}`,      prompts: ['Review my code for bugs', 'Write unit tests', 'Explain this algorithm', 'Optimise this SQL query'] },
+  { id: 'analyze',  label: `📊 ${t('chat.area.modes.analyze')}`,   prompts: ['Analyze this dataset', 'Find patterns in this data', 'Compare these two approaches', 'Create a SWOT analysis'] },
+  { id: 'create',   label: `✍️ ${t('chat.area.modes.create')}`,    prompts: ['Write a blog post about', 'Create social media captions', 'Draft a press release', 'Write ad copy for'] },
+  { id: 'learn',    label: `🎓 ${t('chat.area.modes.learn')}`,     prompts: ['Explain quantum computing', 'Teach me about transformers', 'What is RAG in AI?', 'How does RLHF work?'] },
+];
 
 export default function ChatInput() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { obDone, currentModelId, userGoal, userAudience, userLevel, userBudget } = useSelector((s: RootState) => s.chat);
   const [text, setText] = useState('');
@@ -58,6 +58,8 @@ export default function ChatInput() {
 
   const { items: catalog } = useSelector((s: RootState) => s.models);
   const currentModel = catalog.find((m) => m.id === currentModelId);
+
+  const CATEGORY_TABS = getCategoryTabs(t);
 
   const MAX_ATTACHMENTS = 6;
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -137,7 +139,7 @@ export default function ChatInput() {
       recognitionRef.current = recognition;
       recognition.start();
       setMicActive(true);
-      dispatch(showToast('Listening...'));
+      dispatch(showToast(t('chat.sidebar.loading'))); // Using loading as a proxy for "Listening..." for now
     } catch {
       setMicActive(false);
       dispatch(showToast('Unable to start voice recording.'));
@@ -157,10 +159,10 @@ export default function ChatInput() {
   }, []);
 
   const handleSend = useCallback(async () => {
-    const t = text.trim();
-    if (!t && attachments.length === 0) return;
+    const tVal = text.trim();
+    if (!tVal && attachments.length === 0) return;
     setText('');
-    const payloadText = t || `Attached ${attachments.length} file${attachments.length > 1 ? 's' : ''}`;
+    const payloadText = tVal || `Attached ${attachments.length} file${attachments.length > 1 ? 's' : ''}`;
     dispatch(addMessage({
       id: Date.now().toString(),
       role: 'user',
@@ -177,7 +179,7 @@ export default function ChatInput() {
       : undefined;
 
     try {
-      const source = t || 'shared files';
+      const source = tVal || 'shared files';
       const reply = await apiChatMessage(source, context);
       const recs = (reply.recs as Model[]).map((r) => {
         const local = catalog.find((m) => m.id === r.id);
@@ -258,7 +260,7 @@ export default function ChatInput() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder="Message NexusAI..."
+            placeholder={t('chat.area.placeholder')}
             rows={1}
             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-[0.82rem] sm:text-[0.875rem] bg-transparent border-none outline-none resize-none text-text1 placeholder:text-text3 font-instrument"
             style={{ minHeight: 40, maxHeight: 120 }}

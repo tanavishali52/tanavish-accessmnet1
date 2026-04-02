@@ -7,25 +7,27 @@ import { addMessage, setOnboardPhase, setObDone, ChatAttachment } from '@/store/
 import { showToast } from '@/store/appSlice';
 import { FiSearch, FiMic, FiArrowRight, FiUpload } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
+import { useTranslation, Trans } from 'react-i18next';
 
-const QUICK_CHIPS = [
-  '🧠 Best for coding',
-  '💰 Cheapest vision',
-  '⚡ Fastest chatbot',
-  '🔬 Open source',
-  '📊 GPT vs Claude',
+const getQuickChips = (t: any) => [
+  t('landing.chips.coding'),
+  t('landing.chips.vision'),
+  t('landing.chips.fastest'),
+  t('landing.chips.opensource'),
+  t('landing.chips.compare'),
 ];
 
-const ACTION_GRID = [
-  { icon: '💬', label: 'Chat with any model' },
-  { icon: '🔍', label: 'Compare models' },
-  { icon: '🤖', label: 'Build an agent' },
-  { icon: '📊', label: 'Analyse data' },
-  { icon: '🖼', label: 'Generate images' },
-  { icon: '✦', label: 'Explore more', dashed: true },
+const getActionGrid = (t: any) => [
+  { icon: '💬', label: t('landing.actions.chat') },
+  { icon: '🔍', label: t('landing.actions.compare') },
+  { icon: '🤖', label: t('landing.actions.build') },
+  { icon: '📊', label: t('landing.actions.analyse') },
+  { icon: '🖼', label: t('landing.actions.generate') },
+  { icon: '✦', label: t('landing.actions.explore'), dashed: true },
 ];
 
 export default function Hero() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -35,6 +37,9 @@ export default function Hero() {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  const QUICK_CHIPS = getQuickChips(t);
+  const ACTION_GRID = getActionGrid(t);
 
   const handleSearch = () => {
     if (query.trim() || attachments.length > 0) {
@@ -134,8 +139,9 @@ export default function Hero() {
         className="font-syne font-bold text-text1 leading-[1.05] max-w-[90vw] sm:max-w-[700px] md:max-w-[800px] mb-4 sm:mb-5 relative z-10 px-2"
         style={{ fontSize: 'clamp(2rem, 7vw, 5.5rem)', letterSpacing: '-0.04em' }}
       >
-        Discover, Compare &{' '}
-        <span className="text-accent">Deploy</span> AI Models
+        <Trans i18nKey="landing.hero_headline">
+          Discover, Compare & <span className="text-accent">Deploy</span> AI Models
+        </Trans>
       </motion.h1>
 
       <motion.p
@@ -144,7 +150,7 @@ export default function Hero() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="text-[0.9rem] sm:text-[1.05rem] text-text2 max-w-[90vw] sm:max-w-[500px] mb-8 sm:mb-12 relative z-10 px-2"
       >
-        The AI model hub trusted by 50,000+ developers. Find the perfect model for any task.
+        {t('landing.hero_subtitle')}
       </motion.p>
 
       {/* Search bar */}
@@ -175,7 +181,7 @@ export default function Hero() {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search AI models or describe your use case..."
+              placeholder={t('landing.search_placeholder')}
               className="flex-1 px-2 sm:px-3 py-3 sm:py-4 text-[0.85rem] sm:text-[0.98rem] bg-transparent outline-none text-text1 placeholder:text-text3 font-instrument min-w-0"
             />
             {/* Hide icons on small screens */}
@@ -207,7 +213,7 @@ export default function Hero() {
               onClick={handleSearch}
               className="bg-accent text-white flex items-center gap-1 sm:gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-[22px] text-[0.78rem] sm:text-[0.875rem] font-medium mr-1.5 hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument whitespace-nowrap"
             >
-              Search <FiArrowRight size={12} />
+              {t('landing.search_button')} <FiArrowRight size={12} />
             </motion.button>
           </div>
         </div>
@@ -262,9 +268,9 @@ export default function Hero() {
         className="grid grid-cols-3 gap-6 sm:gap-12 justify-center relative z-10 w-full max-w-[360px] sm:max-w-none sm:w-auto"
       >
         {[
-          { value: '220+', label: 'AI Models' },
-          { value: '28+', label: 'AI Labs' },
-          { value: '50K+', label: 'Developers' },
+          { value: '220+', label: t('landing.stats.models') },
+          { value: '28+', label: t('landing.stats.labs') },
+          { value: '50K+', label: t('landing.stats.devs') },
         ].map((s) => (
           <div key={s.label} className="text-center">
             <strong className="block font-syne text-[1.5rem] sm:text-[2rem] font-bold text-text1">{s.value}</strong>

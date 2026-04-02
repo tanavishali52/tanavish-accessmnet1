@@ -6,8 +6,10 @@ import { RootState } from '@/store';
 import { setCurrentModelId } from '@/store/chatSlice';
 import { openApp, showToast } from '@/store/appSlice';
 import { FiSearch, FiPlus, FiLoader } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 export default function ChatSidebar() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const currentModelId = useSelector((s: RootState) => s.chat.currentModelId);
   const { items: models, status } = useSelector((s: RootState) => s.models);
@@ -21,20 +23,22 @@ export default function ChatSidebar() {
   const handleSelect = (id: string) => {
     dispatch(setCurrentModelId(id));
     const model = models.find((m) => m.id === id);
-    if (model) dispatch(showToast(`Switched to ${model.name}`));
+    if (model) dispatch(showToast(t('chat.sidebar.switched_to_toast', { name: model.name })));
   };
 
   return (
     <div className="w-[240px] lg:w-[252px] h-full flex-shrink-0 bg-white border-r border-black/[0.08] overflow-y-auto flex flex-col">
       {/* Search */}
       <div className="p-3 sm:p-4 border-b border-black/[0.08]">
-        <div className="text-[0.65rem] sm:text-[0.68rem] text-text3 font-semibold uppercase tracking-[0.08em] mb-2 sm:mb-3">Models</div>
+        <div className="text-[0.65rem] sm:text-[0.68rem] text-text3 font-semibold uppercase tracking-[0.08em] mb-2 sm:mb-3">
+          {t('chat.sidebar.models')}
+        </div>
         <div className="relative">
           <FiSearch size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text3" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search..."
+            placeholder={t('chat.sidebar.search')}
             className="w-full pl-7 pr-3 py-2 text-[0.78rem] border border-black/[0.14] bg-bg text-text1 outline-none focus:border-accent font-instrument"
             style={{ borderRadius: 8 }}
           />
@@ -45,7 +49,7 @@ export default function ChatSidebar() {
       <div className="p-2 sm:p-3 flex-1">
         {status === 'loading' && models.length === 0 && (
           <div className="flex items-center justify-center py-8 text-text3 text-[0.78rem] gap-2">
-            <FiLoader size={13} className="animate-spin" /> Loading…
+            <FiLoader size={13} className="animate-spin" /> {t('chat.sidebar.loading')}
           </div>
         )}
         {filtered.map((model) => (
@@ -81,7 +85,7 @@ export default function ChatSidebar() {
           className="w-full flex items-center justify-center gap-1.5 py-2 bg-accent-lt border border-accent/25 text-[0.75rem] sm:text-[0.78rem] text-accent font-medium hover:bg-accent hover:text-white transition-all cursor-pointer font-instrument"
           style={{ borderRadius: 8 }}
         >
-          <FiPlus size={13} /> Create Agent
+          <FiPlus size={13} /> {t('chat.sidebar.create_agent')}
         </button>
       </div>
     </div>

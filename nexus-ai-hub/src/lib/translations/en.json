@@ -1,0 +1,119 @@
+{
+  "common": {
+    "chat_hub": "Chat Hub",
+    "marketplace": "Marketplace",
+    "discover_new": "Discover New",
+    "agents": "Agents",
+    "sign_in": "Sign in",
+    "get_started": "Get Started",
+    "start": "Start",
+    "go_home": "NexusAI"
+  },
+  "landing": {
+    "hero_headline": "Discover, Compare & <1>Deploy</1> AI Models",
+    "hero_subtitle": "The AI model hub trusted by 50,000+ developers. Find the perfect model for any task.",
+    "search_placeholder": "Search AI models or describe your use case...",
+    "search_button": "Search",
+    "chips": {
+      "coding": "🧠 Best for coding",
+      "vision": "💰 Cheapest vision",
+      "fastest": "⚡ Fastest chatbot",
+      "opensource": "🔬 Open source",
+      "compare": "📊 GPT vs Claude"
+    },
+    "actions": {
+      "chat": "Chat with any model",
+      "compare": "Compare models",
+      "build": "Build an agent",
+      "analyse": "Analyse data",
+      "generate": "Generate images",
+      "explore": "Explore more"
+    },
+    "stats": {
+      "models": "AI Models",
+      "labs": "AI Labs",
+      "devs": "Developers"
+    }
+  },
+  "chat": {
+    "sidebar": {
+      "models": "Models",
+      "search": "Search...",
+      "loading": "Loading...",
+      "create_agent": "Create Agent",
+      "switched_to_toast": "Switched to {{name}}"
+    },
+    "right_panel": {
+      "active_model": "Active Model",
+      "rating": "Rating",
+      "reviews": "Reviews",
+      "price": "Price",
+      "details": "Details",
+      "how_to_use": "How to Use",
+      "quick_actions": "Quick Actions",
+      "refine_setup": "Refine Your Setup",
+      "latest_updates": "Latest Updates",
+      "actions": {
+        "marketplace": "🛍 Browse Marketplace",
+        "build_agent": "🤖 Build an Agent",
+        "research_feed": "🔬 Research Feed"
+      },
+      "refine": {
+        "faster_cheaper": "Make it faster & cheaper",
+        "accuracy_quality": "Increase accuracy & quality",
+        "api_integration": "Add tool/API integration",
+        "scale_production": "Scale for production"
+      }
+    },
+    "area": {
+      "welcome_title": "Welcome to NexusAI Hub",
+      "welcome_subtitle": "I'll help you find the perfect AI model in under 60 seconds. What's your primary use case?",
+      "placeholder": "...Message NexusAI",
+      "goals": {
+        "chat": "Chat & Assistants",
+        "code": "Code & Dev",
+        "image": "Image Generation",
+        "data": "Data Analysis",
+        "writing": "Content Writing",
+        "agents": "AI Agents"
+      },
+      "onboarding": {
+        "audience": {
+          "title": "Who is your primary audience?",
+          "personal": "Personal use",
+          "business": "Small business",
+          "enterprise": "Enterprise",
+          "academic": "Research / Academic"
+        },
+        "level": {
+          "title": "What's your experience level with AI APIs?",
+          "beginner": "Complete beginner",
+          "experience": "Some experience",
+          "intermediate": "Intermediate dev",
+          "expert": "Expert / Production"
+        },
+        "budget": {
+          "title": "Almost done! What's your monthly budget for AI services?",
+          "free": "Free only",
+          "under50": "Under $50/mo",
+          "under500": "$50–$500/mo",
+          "over500": "$500+/mo"
+        },
+        "completion": "Based on your profile, here are my top personalised recommendations:"
+      },
+      "suggestions": {
+        "product_desc": "Write a product description",
+        "summarise": "Summarise this document",
+        "pro_email": "Draft a professional email",
+        "content_calendar": "Create a content calendar"
+      },
+      "modes": {
+        "learn": "Learn",
+        "create": "Create",
+        "analyze": "Analyze",
+        "code": "Code",
+        "usecases": "Use Cases"
+      }
+    }
+  }
+}

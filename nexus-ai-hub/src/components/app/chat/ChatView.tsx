@@ -7,8 +7,10 @@ import ChatSidebar from './ChatSidebar';
 import ChatArea from './ChatArea';
 import ChatInput from './ChatInput';
 import ChatRightPanel from './ChatRightPanel';
+import { useTranslation } from 'react-i18next';
 
 export default function ChatView() {
+  const { t } = useTranslation();
   const [showSidebar, setShowSidebar] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
 
@@ -55,13 +57,13 @@ export default function ChatView() {
             onClick={() => setShowSidebar(true)}
             className="flex items-center gap-1.5 text-[0.78rem] text-text2 border border-black/[0.14] rounded-lg px-2.5 py-1.5 hover:bg-bg2 transition-colors font-instrument"
           >
-            <FiSidebar size={14} /> Models
+            <FiSidebar size={14} /> {t('chat.sidebar.models')}
           </button>
           <button
             onClick={() => setShowRightPanel(true)}
             className="flex items-center gap-1.5 text-[0.78rem] text-text2 border border-black/[0.14] rounded-lg px-2.5 py-1.5 hover:bg-bg2 transition-colors font-instrument"
           >
-            <FiLayout size={14} /> Details
+            <FiLayout size={14} /> {t('chat.right_panel.details')}
           </button>
         </div>
 

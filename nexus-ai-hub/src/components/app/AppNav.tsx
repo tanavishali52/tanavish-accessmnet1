@@ -12,12 +12,14 @@ import {
 } from 'react-icons/fi';
 import { usePathname, useRouter } from 'next/navigation';
 import { apiLogout } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 
-const TABS: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
-  { id: 'chat',        label: 'Chat Hub',     icon: <FiMessageSquare size={14} /> },
-  { id: 'marketplace', label: 'Marketplace',  icon: <FiShoppingBag size={14} /> },
-  { id: 'agents',      label: 'Agents',       icon: <FiCpu size={14} /> },
-  { id: 'research',    label: 'Discover New', icon: <FiBookOpen size={14} /> },
+const getTabs = (t: any): { id: ActiveTab; label: string; icon: React.ReactNode }[] => [
+  { id: 'chat',        label: t('common.chat_hub'),     icon: <FiMessageSquare size={14} /> },
+  { id: 'marketplace', label: t('common.marketplace'),  icon: <FiShoppingBag size={14} /> },
+  { id: 'agents',      label: t('common.agents'),       icon: <FiCpu size={14} /> },
+  { id: 'research',    label: t('common.discover_new'), icon: <FiBookOpen size={14} /> },
 ];
 
 const TAB_ROUTES: Record<ActiveTab, string> = {
@@ -28,6 +30,7 @@ const TAB_ROUTES: Record<ActiveTab, string> = {
 };
 
 export default function AppNav() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname();
@@ -35,6 +38,8 @@ export default function AppNav() {
   const { items: models } = useSelector((s: RootState) => s.models);
   const { isAuthenticated, user } = useSelector((s: RootState) => s.auth);
   const [mobileOpen, setMobileOpen] = useState(false);
+  
+  const TABS = getTabs(t);
   const pathTab = TABS.find((tab) => pathname === TAB_ROUTES[tab.id])?.id;
   const selectedTab = pathTab ?? activeTab;
 
@@ -55,7 +60,7 @@ export default function AppNav() {
         <div className="w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] bg-accent rounded-[5px] flex items-center justify-center">
           <FiZap size={11} className="text-white" />
         </div>
-        NexusAI
+        {t('common.go_home')}
       </button>
 
       {/* Desktop Tabs */}
@@ -83,6 +88,7 @@ export default function AppNav() {
 
       {/* Desktop Actions */}
       <div className="hidden md:flex items-center gap-2">
+        <LanguageSwitcher />
         {isAuthenticated && user ? (
           <>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg border border-black/[0.1]">
@@ -95,7 +101,7 @@ export default function AppNav() {
               onClick={handleLogout}
               className="flex items-center gap-1.5 border border-black/[0.14] text-text2 text-[0.82rem] px-3 py-2 rounded-full hover:border-red-400 hover:text-red-500 transition-all cursor-pointer font-instrument"
             >
-              <FiLogOut size={13} /> Sign out
+              <FiLogOut size={13} /> {t('common.sign_in').includes('Sign') ? 'Sign out' : 'لاگ آؤٹ'}
             </button>
           </>
         ) : (
@@ -104,7 +110,7 @@ export default function AppNav() {
               onClick={() => router.push('/login?next=/chat')}
               className="border border-black/[0.14] text-text2 text-[0.82rem] px-4 py-2 rounded-full hover:border-accent hover:text-accent transition-all cursor-pointer font-instrument"
             >
-              Sign in
+              {t('common.sign_in')}
             </button>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -115,19 +121,22 @@ export default function AppNav() {
               }}
               className="bg-accent text-white text-[0.82rem] font-medium px-4 py-2 rounded-full hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
             >
-              Try free →
+              {t('common.get_started')}
             </motion.button>
           </>
         )}
       </div>
 
-      {/* Mobile hamburger */}
-      <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="flex md:hidden w-8 h-8 items-center justify-center text-text2 border border-black/[0.14] rounded-lg hover:bg-bg2 transition-colors"
-      >
-        {mobileOpen ? <FiX size={16} /> : <FiMenu size={16} />}
-      </button>
+      {/* Mobile Actions Overlay */}
+      <div className="flex md:hidden items-center gap-2">
+         <LanguageSwitcher />
+         <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="w-8 h-8 flex items-center justify-center text-text2 border border-black/[0.14] rounded-lg hover:bg-bg2 transition-colors"
+          >
+            {mobileOpen ? <FiX size={16} /> : <FiMenu size={16} />}
+          </button>
+      </div>
 
       {/* Mobile dropdown */}
       <AnimatePresence>
@@ -161,7 +170,7 @@ export default function AppNav() {
                   onClick={() => { handleLogout(); setMobileOpen(false); }}
                   className="flex-1 flex items-center justify-center gap-1.5 border border-black/[0.14] text-text1 text-[0.82rem] font-medium rounded-full py-2 hover:border-red-400 hover:text-red-500 transition-all cursor-pointer font-instrument"
                 >
-                  <FiLogOut size={13} /> Sign out
+                  <FiLogOut size={13} /> {t('common.sign_in').includes('Sign') ? 'Sign out' : 'لاگ آؤٹ'}
                 </button>
               ) : (
                 <>
@@ -169,13 +178,13 @@ export default function AppNav() {
                     onClick={() => { router.push('/login?next=/chat'); setMobileOpen(false); }}
                     className="flex-1 border border-black/[0.14] text-text1 text-[0.82rem] font-medium rounded-full py-2 hover:border-accent hover:text-accent transition-all cursor-pointer font-instrument"
                   >
-                    Sign in
+                    {t('common.sign_in')}
                   </button>
                   <button
                     onClick={() => { const m = models.find((m) => m.id === 'gpt5') || models[0]; if (m) dispatch(openModal({ model: m })); setMobileOpen(false); }}
                     className="flex-1 bg-accent text-white text-[0.82rem] font-medium rounded-full py-2 hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
                   >
-                    Try free →
+                    {t('common.get_started')}
                   </button>
                 </>
               )}
