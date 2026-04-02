@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Model } from '@/lib/api';
 
-export type ModalTab = 'overview' | 'guide' | 'pricing' | 'prompt' | 'agent' | 'reviews';
+export type ModalTab = 'overview' | 'guide' | 'pricing' | 'prompt' | 'agent' | 'reviews' | 'create-agent';
 
 interface ModalState {
   isOpen: boolean;

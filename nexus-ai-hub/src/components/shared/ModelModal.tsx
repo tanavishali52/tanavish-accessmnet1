@@ -6,7 +6,8 @@ import { RootState } from '@/store';
 import { closeModal, setModalTab, ModalTab } from '@/store/modalSlice';
 import { openApp } from '@/store/appSlice';
 import { setCurrentModelId } from '@/store/chatSlice';
-import { FiX, FiZap, FiCopy } from 'react-icons/fi';
+import { FiX, FiZap, FiCopy, FiCpu, FiGlobe, FiSearch, FiFileText, FiCheck } from 'react-icons/fi';
+import { useState } from 'react';
 
 const TABS: { id: ModalTab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -15,11 +16,13 @@ const TABS: { id: ModalTab; label: string }[] = [
   { id: 'prompt',   label: 'Prompt Guide' },
   { id: 'agent',    label: 'Agents' },
   { id: 'reviews',  label: 'Reviews' },
+  { id: 'create-agent', label: 'Create Agent' },
 ];
 
 export default function ModelModal() {
   const dispatch = useDispatch();
   const { isOpen, activeModel, activeTab } = useSelector((s: RootState) => s.modal);
+  const models = useSelector((s: RootState) => s.models.items);
   if (!activeModel) return null;
 
   const handleTryNow = () => {
@@ -62,17 +65,21 @@ export default function ModelModal() {
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-syne text-[1.1rem] sm:text-[1.4rem] font-bold text-text1 leading-tight" style={{ letterSpacing: '-0.03em' }}>
-                  {activeModel.name}
+                  {activeTab === 'create-agent' ? 'Configure New Agent' : activeModel.name}
                 </h2>
-                <p className="text-[0.75rem] sm:text-[0.82rem] text-text2 truncate">by {activeModel.org} · {activeModel.tags[0]}</p>
+                <p className="text-[0.75rem] sm:text-[0.82rem] text-text2 truncate">
+                  {activeTab === 'create-agent' ? `Developing an agent using ${activeModel.name}` : `by ${activeModel.org} · ${activeModel.tags[0]}`}
+                </p>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <button
-                  onClick={handleTryNow}
-                  className="flex items-center gap-1 sm:gap-1.5 bg-accent text-white text-[0.75rem] sm:text-[0.82rem] font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
-                >
-                  <FiZap size={12} /> Try
-                </button>
+                {activeTab !== 'create-agent' && (
+                  <button
+                    onClick={handleTryNow}
+                    className="flex items-center gap-1 sm:gap-1.5 bg-accent text-white text-[0.75rem] sm:text-[0.82rem] font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
+                  >
+                    <FiZap size={12} /> Try
+                  </button>
+                )}
                 <button
                   onClick={() => dispatch(closeModal())}
                   className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-bg2 flex items-center justify-center text-text2 hover:bg-bg3 transition-colors border-none cursor-pointer"
@@ -89,7 +96,7 @@ export default function ModelModal() {
                   key={tab.id}
                   onClick={() => dispatch(setModalTab(tab.id))}
                   className={`px-3 sm:px-4 py-2 text-[0.75rem] sm:text-[0.83rem] font-medium border-b-2 mb-[-1px] transition-all whitespace-nowrap font-instrument ${
-                    activeTab === tab.id ? 'text-accent border-accent' : 'text-text2 border-transparent hover:text-text1'
+                    activeTab === tab.id ? 'text-accent border-accent' : 'text-text1 border-transparent hover:text-text3'
                   }`}
                 >
                   {tab.label}
@@ -98,13 +105,14 @@ export default function ModelModal() {
             </div>
 
             {/* Body — scrollable */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 min-h-[300px]">
               {activeTab === 'overview' && <OverviewTab model={activeModel} />}
               {activeTab === 'guide'    && <GuideTab model={activeModel} />}
               {activeTab === 'pricing'  && <PricingTab model={activeModel} />}
               {activeTab === 'prompt'   && <PromptTab />}
               {activeTab === 'agent'    && <AgentTab model={activeModel} />}
               {activeTab === 'reviews'  && <ReviewsTab model={activeModel} />}
+              {activeTab === 'create-agent' && <CreateAgentForm initialModel={activeModel} models={models} />}
             </div>
           </motion.div>
         </motion.div>
@@ -114,6 +122,136 @@ export default function ModelModal() {
 }
 
 /* ── Tab panels ─────────────────────────────────────────────── */
+
+function CreateAgentForm({ initialModel, models }: { initialModel: M; models: M[] }) {
+  const dispatch = useDispatch();
+  const [formData, setFormData] = useState({
+    name: '',
+    role: '',
+    instructions: '',
+    modelId: initialModel.id,
+    tools: {
+      search: true,
+      coder: false,
+      files: true,
+    }
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const handleCreate = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      dispatch(closeModal());
+      dispatch(openApp('chat'));
+      // Simulate agent message
+      setTimeout(() => {
+        // Here we would normally trigger the chat logic to start with the agent
+      }, 500);
+    }, 1500);
+  };
+
+  return (
+    <div className="space-y-6 max-w-2xl mx-auto pb-6 font-instrument">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">Agent Name</label>
+          <input
+            type="text"
+            placeholder="e.g. Research Analyst"
+            className="w-full px-4 py-3 bg-bg border border-black/[0.1] rounded-xl outline-none focus:border-accent transition-all text-sm font-instrument"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">Primary Goal</label>
+          <input
+            type="text"
+            placeholder="e.g. Track market trends"
+            className="w-full px-4 py-3 bg-bg border border-black/[0.1] rounded-xl outline-none focus:border-accent transition-all text-sm font-instrument"
+            value={formData.role}
+            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">Backbone Model</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {models.slice(0, 6).map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setFormData({ ...formData, modelId: m.id })}
+              className={`flex items-center gap-2 p-2 border rounded-xl transition-all cursor-pointer text-left font-instrument ${
+                formData.modelId === m.id ? 'border-accent bg-accent-lt' : 'border-black/[0.08] bg-white hover:border-black/[0.15]'
+              }`}
+            >
+              <span className="text-lg">{m.icon}</span>
+              <span className="text-[0.75rem] font-medium truncate">{m.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">System Instructions</label>
+        <textarea
+          rows={4}
+          placeholder="Detailed personality, behavioral constraints, and expertise guidelines..."
+          className="w-full px-4 py-3 bg-bg border border-black/[0.1] rounded-xl outline-none focus:border-accent transition-all text-sm font-instrument resize-none"
+          value={formData.instructions}
+          onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+        />
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">Agent Capabilities</label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            { id: 'search', label: 'Web Search', icon: <FiSearch />, desc: 'Real-time browsing' },
+            { id: 'coder', label: 'Code Interpreter', icon: <FiCpu />, desc: 'Solve math & logic' },
+            { id: 'files', label: 'File Analysis', icon: <FiFileText />, desc: 'Extract data' },
+          ].map((tool) => (
+            <button
+              key={tool.id}
+              onClick={() => setFormData({
+                ...formData,
+                tools: { ...formData.tools, [tool.id]: !formData.tools[tool.id as keyof typeof formData.tools] }
+              })}
+              className={`flex flex-col items-start p-3 border rounded-xl transition-all cursor-pointer font-instrument text-left ${
+                formData.tools[tool.id as keyof typeof formData.tools] ? 'border-accent bg-accent-lt' : 'border-black/[0.08] bg-white hover:border-black/[0.15]'
+              }`}
+            >
+              <div className={`p-1.5 rounded-lg mb-2 ${formData.tools[tool.id as keyof typeof formData.tools] ? 'bg-accent text-white' : 'bg-bg2 text-text3'}`}>
+                {tool.icon}
+              </div>
+              <div className="text-[0.78rem] font-semibold text-text1">{tool.label}</div>
+              <div className="text-[0.62rem] text-text3 leading-tight">{tool.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="pt-2">
+        <button
+          onClick={handleCreate}
+          disabled={loading || !formData.name}
+          className={`w-full py-3.5 rounded-xl text-white font-syne font-bold text-base transition-all flex items-center justify-center gap-2 cursor-pointer border-none ${
+            loading || !formData.name ? 'bg-black/[0.2] cursor-not-allowed' : 'bg-accent hover:bg-accent2 shadow-lg shadow-accent/20'
+          }`}
+        >
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>Deploy Agent <FiCheck /></>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 type M = NonNullable<RootState['modal']['activeModel']>;
 

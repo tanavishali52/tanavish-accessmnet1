@@ -50,9 +50,11 @@ export default function AgentsView() {
     dispatch(openApp('chat'));
   };
 
-  const handleTemplate = (modelId: string) => {
+  const handleTemplate = (modelId: string, isFromScratch = false) => {
     const model = models.find((m) => m.id === modelId) || models[0];
-    if (model) dispatch(openModal({ model, tab: 'agent' }));
+    if (model) {
+      dispatch(openModal({ model, tab: isFromScratch ? 'create-agent' : 'agent' }));
+    }
   };
 
   return (
@@ -67,7 +69,7 @@ export default function AgentsView() {
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-          onClick={() => handleTemplate('gpt5')}
+          onClick={() => handleTemplate('gpt5', true)}
           className="flex items-center gap-1.5 bg-accent text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-[0.82rem] sm:text-[0.85rem] font-medium hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
         >
           <FiPlus size={15} /> New Agent
@@ -132,7 +134,7 @@ export default function AgentsView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: templates.length * 0.07 }}
           whileHover={{ background: 'rgba(200,98,42,0.1)' }}
-          onClick={() => handleTemplate('gpt5')}
+          onClick={() => handleTemplate('gpt5', true)}
           className="flex flex-col items-center justify-center text-center p-5 sm:p-6 border-[1.5px] border-dashed border-accent/25 cursor-pointer transition-all min-h-[160px] sm:min-h-[180px]"
           style={{ borderRadius: 20, background: '#FDF1EB' }}
         >
