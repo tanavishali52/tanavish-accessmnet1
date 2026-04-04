@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { FiStar } from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import { Model } from '@/lib/api';
@@ -22,6 +23,7 @@ const badgeStyles: Record<string, string> = {
 const tagColorList = ['bg-blue-lt text-blue', 'bg-teal-lt text-teal', 'bg-amber-lt text-amber', 'bg-rose-lt text-rose'];
 
 export default function ModelCard({ model }: ModelCardProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
 
   const handleOpen = () => dispatch(openModal({ model, tab: 'overview' }));
@@ -87,7 +89,7 @@ export default function ModelCard({ model }: ModelCardProps) {
           onClick={handleChat}
           className="text-[0.72rem] sm:text-[0.78rem] text-accent font-medium bg-none border-none cursor-pointer hover:underline whitespace-nowrap flex-shrink-0 font-instrument"
         >
-          Try →
+          {t('modelCard.try')}
         </button>
       </div>
     </motion.div>

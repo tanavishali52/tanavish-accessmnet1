@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import type { RootState } from '@/store';
 import {
   loginStart,
@@ -27,6 +28,7 @@ function safeNext(next: string | null) {
 }
 
 export default function AuthForm({ mode }: { mode: Mode }) {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,10 +40,10 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const title = mode === 'signin' ? 'Sign in' : 'Create your account';
+  const title = mode === 'signin' ? t('auth.form.signin_title') : t('auth.form.signup_title');
   const subtitle = mode === 'signin'
-    ? 'Welcome back — pick up where you left off.'
-    : 'Join the hub and unlock saved chats & agents.';
+    ? t('auth.form.signin_subtitle')
+    : t('auth.form.signup_subtitle');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,15 +51,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail.includes('@')) {
-      dispatch((mode === 'signin' ? loginFailure : signupFailure)('Please enter a valid email.'));
+      dispatch((mode === 'signin' ? loginFailure : signupFailure)(t('auth.validation.email')));
       return;
     }
     if (password.trim().length < 6) {
-      dispatch((mode === 'signin' ? loginFailure : signupFailure)('Password must be at least 6 characters.'));
+      dispatch((mode === 'signin' ? loginFailure : signupFailure)(t('auth.validation.password_min')));
       return;
     }
     if (mode === 'signup' && name.trim().length < 2) {
-      dispatch(signupFailure('Please enter your name.'));
+      dispatch(signupFailure(t('auth.validation.name')));
       return;
     }
 
@@ -82,7 +84,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
       router.replace(nextHref);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      const message = err instanceof Error ? err.message : t('auth.error.generic');
       dispatch((mode === 'signin' ? loginFailure : signupFailure)(message));
     }
   };
@@ -105,36 +107,36 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       <form onSubmit={handleSubmit} className="space-y-3.5">
         {mode === 'signup' && (
           <div>
-            <label className="block text-[0.8rem] text-text2 font-medium font-instrument mb-1.5">Name</label>
+            <label className="block text-[0.8rem] text-text2 font-medium font-instrument mb-1.5">{t('auth.form.labels.name')}</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-xl border border-black/[0.14] bg-white px-4 py-3 text-[0.9rem] outline-none focus:border-accent focus:shadow-[0_0_0_4px_rgba(200,98,42,0.10)] font-instrument"
-              placeholder="Jane Doe"
+              placeholder={t('auth.form.placeholders.name')}
               autoComplete="name"
             />
           </div>
         )}
 
         <div>
-          <label className="block text-[0.8rem] text-text2 font-medium font-instrument mb-1.5">Email</label>
+          <label className="block text-[0.8rem] text-text2 font-medium font-instrument mb-1.5">{t('auth.form.labels.email')}</label>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-xl border border-black/[0.14] bg-white px-4 py-3 text-[0.9rem] outline-none focus:border-accent focus:shadow-[0_0_0_4px_rgba(200,98,42,0.10)] font-instrument"
-            placeholder="you@company.com"
+            placeholder={t('auth.form.placeholders.email')}
             autoComplete="email"
             inputMode="email"
           />
         </div>
 
         <div>
-          <label className="block text-[0.8rem] text-text2 font-medium font-instrument mb-1.5">Password</label>
+          <label className="block text-[0.8rem] text-text2 font-medium font-instrument mb-1.5">{t('auth.form.labels.password')}</label>
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-black/[0.14] bg-white px-4 py-3 text-[0.9rem] outline-none focus:border-accent focus:shadow-[0_0_0_4px_rgba(200,98,42,0.10)] font-instrument"
-            placeholder="••••••••"
+            placeholder={t('auth.form.placeholders.password')}
             type="password"
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
           />
@@ -145,7 +147,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           disabled={isLoading}
           className="w-full bg-accent text-white text-[0.9rem] font-medium rounded-full px-5 py-3 hover:bg-accent2 transition-colors cursor-pointer font-instrument border-none disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+          {isLoading ? t('auth.form.buttons.wait') : mode === 'signin' ? t('auth.form.buttons.signin') : t('auth.form.buttons.signup')}
         </button>
       </form>
 

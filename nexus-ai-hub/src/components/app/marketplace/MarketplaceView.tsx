@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { RootState } from '@/store';
 import {
   setSearchQuery, setActiveFilter, setActiveLab,
@@ -14,15 +15,11 @@ import ModelCard from '@/components/shared/ModelCard';
 import Skeleton from '@/components/shared/Skeleton';
 import { FiSearch, FiMic, FiPaperclip, FiFilter, FiX } from 'react-icons/fi';
 
-const TYPE_FILTERS = [
-  { id: 'all',      label: 'All' },
-  { id: 'language', label: 'Language' },
-  { id: 'vision',   label: 'Vision' },
-  { id: 'code',     label: 'Code' },
-  { id: 'image',    label: 'Image Gen' },
-  { id: 'audio',    label: 'Audio' },
-  { id: 'open',     label: 'Open Source' },
-];
+interface TypeFilter {
+  id: string;
+  label: string;
+  translationKey?: string;
+}
 
 function ModelCardSkeleton() {
   return (
@@ -47,9 +44,20 @@ function ModelCardSkeleton() {
 }
 
 export default function MarketplaceView() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { searchQuery, activeFilter, activeLab, priceRange, minRating, items, labs, status } = useSelector((s: RootState) => s.models);
   const [showFilters, setShowFilters] = useState(false);
+
+  const TYPE_FILTERS: TypeFilter[] = [
+    { id: 'all',      label: t('marketplace.filters.all'), translationKey: 'marketplace.filters.all' },
+    { id: 'language', label: t('marketplace.filters.language'), translationKey: 'marketplace.filters.language' },
+    { id: 'vision',   label: t('marketplace.filters.vision'), translationKey: 'marketplace.filters.vision' },
+    { id: 'code',     label: t('marketplace.filters.code'), translationKey: 'marketplace.filters.code' },
+    { id: 'image',    label: t('marketplace.filters.image_gen'), translationKey: 'marketplace.filters.image_gen' },
+    { id: 'audio',    label: t('marketplace.filters.audio'), translationKey: 'marketplace.filters.audio' },
+    { id: 'open',     label: t('marketplace.filters.opensource'), translationKey: 'marketplace.filters.opensource' },
+  ];
 
   const catalog = items;
 
@@ -70,7 +78,7 @@ export default function MarketplaceView() {
         {/* Row 1: title + search */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className="font-syne text-[1rem] sm:text-[1.1rem] font-bold text-text1 whitespace-nowrap" style={{ letterSpacing: '-0.02em' }}>
-            AI Marketplace
+            {t('marketplace.header')}
           </span>
           {/* Search */}
           <div className="flex-1 min-w-[160px] flex items-center bg-bg border border-black/[0.14] rounded-full focus-within:border-accent focus-within:bg-white transition-all overflow-hidden">

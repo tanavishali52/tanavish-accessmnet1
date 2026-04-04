@@ -1,25 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { FiZap, FiCheck } from 'react-icons/fi';
 
 interface AuthLeftPanelProps {
   mode: 'signin' | 'signup';
 }
-
-const FEATURES = [
-  { icon: '🧠', title: '220+ AI Models', desc: 'Access every frontier model from one unified hub' },
-  { icon: '⚡', title: 'Instant Deployment', desc: 'Go from discovery to production API calls in minutes' },
-  { icon: '📊', title: 'Smart Comparisons', desc: 'Side-by-side benchmarks, pricing & capability matrix' },
-  { icon: '🤖', title: 'Agent Builder', desc: 'Create, test and deploy custom AI agents effortlessly' },
-];
-
-const TESTIMONIAL = {
-  quote: "NexusAI cut our model evaluation time from weeks to hours. It's the single source of truth for our entire AI stack.",
-  name: 'Sarah Chen',
-  role: 'Head of AI, Vercel',
-  avatar: 'SC',
-};
 
 const container = {
   hidden: {},
@@ -31,6 +18,21 @@ const item = {
 };
 
 export default function AuthLeftPanel({ mode }: AuthLeftPanelProps) {
+  const { t } = useTranslation();
+
+  const FEATURES = [
+    { icon: '🧠', title: t('auth.features.models_title'), desc: t('auth.features.models_desc') },
+    { icon: '⚡', title: t('auth.features.deploy_title'), desc: t('auth.features.deploy_desc') },
+    { icon: '📊', title: t('auth.features.compare_title'), desc: t('auth.features.compare_desc') },
+    { icon: '🤖', title: t('auth.features.build_title'), desc: t('auth.features.build_desc') },
+  ];
+
+  const TESTIMONIAL = {
+    quote: t('auth.testimonial.quote'),
+    name: t('auth.testimonial.author'),
+    role: t('auth.testimonial.role'),
+    avatar: 'SC',
+  };
   return (
     <div
       className="hidden lg:flex flex-col justify-between p-10 xl:p-14 relative overflow-hidden"
@@ -73,7 +75,7 @@ export default function AuthLeftPanel({ mode }: AuthLeftPanelProps) {
       >
         <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-3 py-1.5 text-[0.72rem] text-white/70 mb-5 font-instrument">
           <span className="w-1.5 h-1.5 bg-green rounded-full animate-pulse flex-shrink-0" />
-          {mode === 'signin' ? 'Welcome back to the hub' : 'Join 50,000+ developers'}
+          {mode === 'signin' ? t('auth.badges.signin_title') : t('auth.badges.signup_title')}
         </div>
         <h2 className="font-syne text-[2rem] xl:text-[2.4rem] font-bold text-white leading-[1.1] mb-4"
           style={{ letterSpacing: '-0.04em' }}>

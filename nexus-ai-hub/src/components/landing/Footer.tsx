@@ -1,17 +1,39 @@
 'use client';
 
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { openApp } from '@/store/appSlice';
 import { FiZap, FiTwitter, FiGithub, FiLinkedin } from 'react-icons/fi';
 
 export default function Footer() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
 
   const links = {
-    Product:   ['Marketplace', 'Chat Hub', 'Agent Builder', 'Research Feed'],
-    Models:    ['OpenAI', 'Anthropic', 'Google', 'Meta'],
-    Resources: ['Documentation', 'API Reference', 'Prompt Guide', 'Blog'],
-    Company:   ['About', 'Careers', 'Privacy', 'Terms'],
+    [t('landing.footer.sections.product')]: [
+      t('landing.footer.links.marketplace'),
+      t('landing.footer.links.chat_hub'),
+      t('landing.footer.links.agent_builder'),
+      t('landing.footer.links.pricing'),
+    ],
+    [t('landing.footer.sections.models')]: [
+      'OpenAI',
+      'Anthropic',
+      'Google',
+      'Meta',
+    ],
+    [t('landing.footer.sections.resources')]: [
+      t('landing.footer.links.documentation'),
+      'API',
+      t('landing.footer.links.blog'),
+      t('landing.footer.links.contact'),
+    ],
+    [t('landing.footer.sections.company')]: [
+      t('landing.footer.links.about'),
+      t('landing.footer.links.careers'),
+      'Privacy',
+      'Terms',
+    ],
   };
 
   return (
@@ -32,7 +54,7 @@ export default function Footer() {
               NexusAI
             </button>
             <p className="text-[0.78rem] text-white/50 leading-relaxed mb-4 max-w-[240px]">
-              The AI model hub trusted by 50,000+ developers worldwide.
+              {t('landing.footer.description')}
             </p>
             <div className="flex gap-2 sm:gap-3">
               {[FiTwitter, FiGithub, FiLinkedin].map((Icon, i) => (
@@ -62,8 +84,8 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[0.75rem] text-white/40">© 2026 NexusAI. All rights reserved.</p>
-          <p className="text-[0.75rem] text-white/40">Built for developers, by developers.</p>
+          <p className="text-[0.75rem] text-white/40">{t('landing.footer.copyright')}</p>
+          <p className="text-[0.75rem] text-white/40">{t('landing.footer.tagline')}</p>
         </div>
       </div>
     </footer>

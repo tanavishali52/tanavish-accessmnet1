@@ -2,11 +2,13 @@
 
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { RootState } from '@/store';
 import { openApp } from '@/store/appSlice';
 import ModelCard from '@/components/shared/ModelCard';
 
 export default function FeaturedModels() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { items, labs } = useSelector((s: RootState) => s.models);
   const featured = items.slice(0, 3);
@@ -17,13 +19,13 @@ export default function FeaturedModels() {
       <section className="py-10 sm:py-16 px-4 sm:px-8 md:px-10">
         <div className="flex items-end justify-between mb-5 sm:mb-8">
           <h2 className="font-syne text-[1.4rem] sm:text-[1.9rem] font-bold text-text1" style={{ letterSpacing: '-0.03em' }}>
-            Featured Models
+            {t('landing.featured_title')}
           </h2>
           <button
             onClick={() => dispatch(openApp('marketplace'))}
             className="text-[0.82rem] sm:text-[0.85rem] text-accent font-medium cursor-pointer hover:underline font-instrument"
           >
-            View all →
+            {t('landing.featured_view_all')}
           </button>
         </div>
         {/* Responsive: 1 col on mobile → 2 on sm → 3 on lg */}
@@ -47,15 +49,15 @@ export default function FeaturedModels() {
         <div className="flex items-end justify-between mb-5 sm:mb-8">
           <div>
             <h2 className="font-syne text-[1.4rem] sm:text-[1.9rem] font-bold text-text1" style={{ letterSpacing: '-0.03em' }}>
-              AI Labs
+              {t('landing.labs_title')}
             </h2>
-            <p className="text-[0.82rem] sm:text-[0.85rem] text-text2 mt-1">Browse models from 28+ leading labs</p>
+            <p className="text-[0.82rem] sm:text-[0.85rem] text-text2 mt-1">{t('landing.labs_subtitle')}</p>
           </div>
           <button
             onClick={() => dispatch(openApp('marketplace'))}
             className="text-[0.82rem] sm:text-[0.85rem] text-accent font-medium cursor-pointer hover:underline font-instrument"
           >
-            Explore →
+            {t('landing.labs_explore')}
           </button>
         </div>
         {/* Responsive: 2 col → 3 → 4 → 6 */}
@@ -100,17 +102,17 @@ export default function FeaturedModels() {
         >
           <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">✦</div>
           <h2 className="font-syne text-[1.6rem] sm:text-[2.2rem] font-bold text-text1 mb-3 sm:mb-4" style={{ letterSpacing: '-0.03em' }}>
-            Find your perfect AI model
+            {t('landing.banner_find')}
           </h2>
           <p className="text-[0.85rem] sm:text-base text-text2 mb-6 sm:mb-8 px-4 sm:px-0">
-            Answer 4 quick questions and get a personalised recommendation in under 60 seconds.
+            {t('landing.banner_questions')}
           </p>
           <motion.button
             whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
             onClick={() => dispatch(openApp('chat'))}
             className="bg-accent text-white font-medium px-6 sm:px-8 py-3 sm:py-3.5 rounded-full text-[0.875rem] sm:text-[0.95rem] hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
           >
-            Get personalised recommendations →
+            {t('landing.banner_cta')}
           </motion.button>
         </motion.div>
       </section>

@@ -115,5 +115,165 @@
         "usecases": "استعمال کے طریقے"
       }
     }
+  },
+  "auth": {
+    "form": {
+      "signin_title": "سائن ان",
+      "signup_title": "اپنا اکاؤنٹ بنائیں",
+      "signin_subtitle": "خوش آمدید - وہاں سے شروع کریں جہاں آپ نے چھوڑا تھا۔",
+      "signup_subtitle": "ہب میں شامل ہوں اور محفوظ چیٹس اور ایجنٹس کو کھول دیں۔",
+      "labels": {
+        "name": "نام",
+        "email": "ای میل",
+        "password": "پاس ورڈ"
+      },
+      "placeholders": {
+        "name": "جین Doe",
+        "email": "aap@company.com",
+        "password": "••••••••"
+      },
+      "buttons": {
+        "wait": "براہ کرم انتظار کریں…",
+        "signin": "سائن ان",
+        "signup": "اکاؤنٹ بنائیں"
+      }
+    },
+    "validation": {
+      "email": "براہ کرم ایک درست ای میل درج کریں۔",
+      "password_min": "پاس ورڈ کم از کم 6 حروف ہونے چاہیں۔",
+      "name": "براہ کرم اپنا نام درج کریں۔"
+    },
+    "error": {
+      "generic": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
+    },
+    "features": {
+      "models_title": "220+ AI ماڈلز",
+      "models_desc": "OpenAI، Claude، Gemini اور دیگر سے تازہ ترین ماڈلز تک رسائی حاصل کریں",
+      "deploy_title": "فوری تعیناتی",
+      "deploy_desc": "سیٹ اپ کی پریشانی کے بغیر سیکنڈ میں کسی بھی ماڈل کو استعمال کرنا شروع کریں",
+      "compare_title": "سمارٹ موازنے",
+      "compare_desc": "بہترین موافقت تلاش کرنے کے لیے ماڈلز کو شانہ بہ شانہ موازنہ کریں",
+      "build_title": "ایجنٹ بنانے والا",
+      "build_desc": "بصری workflowڈیزائن کے ساتھ طاقتور AI ایجنٹس بنائیں"
+    },
+    "testimonial": {
+      "quote": "NexusAI نے ہماری ماڈل تشخیص کے وقت کو ہفتوں سے گھنٹوں میں بدل دیا۔ صرف موازنہ کی خصوصیت نے ہمیں ترقی میں لاکھوں بچائے۔",
+      "author": "سارہ Chen",
+      "role": "Vercel میں AI کے سربراہ"
+    },
+    "badges": {
+      "signin_title": "ہب میں خوش آمدید",
+      "signup_title": "50,000+ ڈویلپرز میں شامل ہوں"
+    }
+  },
+  "landing": {
+    "featured_title": "نمایاں ماڈلز",
+    "featured_view_all": "سب کو دیکھیں →",
+    "labs_title": "AI لیبز",
+    "labs_subtitle": "28+ معروف لیبز سے ماڈلز براؤز کریں",
+    "labs_explore": "تلاش کریں →",
+    "banner_find": "اپنا بہترین AI ماڈل تلاش کریں",
+    "banner_questions": "4 فوری سوالات کے جوابات دیں اور 60 سیکنڈ سے کم میں ذاتی نوعیت کی سفارش حاصل کریں۔",
+    "banner_cta": "ذاتی نوعیت کی سفارشات حاصل کریں →",
+    "footer": {
+      "description": "50,000+ ڈویلپرز کا قابل اعتماد AI ماڈل ہب دنیا بھر میں۔",
+      "copyright": "© 2026 NexusAI۔ تمام حقوق محفوظ ہیں۔",
+      "tagline": "ڈویلپرز کے لیے، ڈویلپرز کی طرف سے بنایا گیا۔",
+      "sections": {
+        "product": "مصنوعات",
+        "models": "ماڈلز",
+        "resources": "وسائل",
+        "company": "کمپنی"
+      },
+      "links": {
+        "marketplace": "مارکیٹ پلیس",
+        "chat_hub": "چیٹ ہب",
+        "agent_builder": "ایجنٹ بنانے والا",
+        "pricing": "قیمت",
+        "documentation": "دستاویزات",
+        "api": "API",
+        "blog": "بلاگ",
+        "about": "تعارف",
+        "careers": "کیریئر",
+        "contact": "رابطہ"
+      }
+    }
+  },
+  "modal": {
+    "tabs": {
+      "overview": "جائزہ",
+      "how_to_use": "استعمال کا طریقہ",
+      "pricing": "قیمت",
+      "prompt_guide": "Prompt گائیڈ",
+      "agents": "ایجنٹس",
+      "reviews": "تبصرے",
+      "create_agent": "ایجنٹ بنائیں"
+    },
+    "configure_agent": "نیا ایجنٹ تیار کریں",
+    "developing_agent_using": "استعمال کرتے ہوئے ایجنٹ تیار کریں"
+  },
+  "modelCard": {
+    "try": "کوشش کریں →"
+  },
+  "agents": {
+    "header_title": "ایجنٹ بنانے والا",
+    "header_subtitle": "کسی بھی ماڈل کو استعمال کرتے ہوئے طاقتور AI ایجنٹس بنائیں۔",
+    "button_new_agent": "نیا ایجنٹ",
+    "banner_title": "یقین نہیں کہاں سے شروع کریں؟",
+    "banner_description": "ہماری AI گائیڈ کے ساتھ چیٹ کریں - اپنے ایجنٹ کی تفصیل دیں اور ذاتی نوعیت کے سیٹ اپ کی منصوبہ حاصل کریں۔",
+    "banner_cta": "ہب سے پوچھیں →",
+    "templates_label": "ایجنٹ ٹیمپلیٹس",
+    "steps": {
+      "template": "ٹیمپلیٹ",
+      "template_desc": "ایجنٹ ٹیمپلیٹ منتخب کریں یا بنائیں",
+      "configure": "ترتیب دیں",
+      "configure_desc": "ٹولس، علم اور برتاؤ سیٹ اپ کریں",
+      "test": "ٹیسٹ کریں",
+      "test_desc": "نمونہ سوالات کے ساتھ اپنے ایجنٹ کو ٹیسٹ کریں",
+      "deploy": "تعینات کریں",
+      "deploy_desc": "اپنے ایجنٹ کو تعینات اور نگرانی کریں"
+    },
+    "tools": {
+      "web_search": "ویب تلاش",
+      "web_search_desc": "حقیقی وقت کی معلومات کے لیے انٹرنیٹ تلاش کریں",
+      "code_interpreter": "کوڈ انٹرپریٹر",
+      "code_interpreter_desc": "کوڈ snippets کو چلائیں اور ٹیسٹ کریں",
+      "file_access": "فائل تک رسائی",
+      "file_access_desc": "اپ لوڈ کردہ فائلوں کو پڑھیں اور پروسیس کریں",
+      "api_calls": "API کالز",
+      "api_calls_desc": "بیرونی APIs کے ساتھ انضمام کریں",
+      "memory": "میموری",
+      "memory_desc": "وقت گزرنے کے تناظر کو ذخیرہ اور حاصل کریں",
+      "scheduler": "شیڈولر",
+      "scheduler_desc": "بار بار کے کام اور workflows کو شیڈول کریں"
+    }
+  },
+  "marketplace": {
+    "header": "AI مارکیٹ پلیس",
+    "search_placeholder": "ماڈلز تلاش کریں...",
+    "filters": {
+      "all": "تمام",
+      "language": "زبان",
+      "vision": "بصری",
+      "code": "کوڈ",
+      "image_gen": "تصویر Generation",
+      "audio": "آڈیو",
+      "opensource": "اوپن سورس"
+    },
+    "coming_soon": {
+      "voice": "آواز کی تلاش - جلد آ رہا ہے",
+      "upload": "فائل اپ لوڈ - جلد آ رہا ہے"
+    }
+  },
+  "research": {
+    "header_title": "AI ریسرچ فیڈ",
+    "header_subtitle": "تازہ ترین papers، رہائی اور کامیابیاں۔",
+    "live_updates": "لائیو اپ ڈیٹس",
+    "discuss_in_chat": "چیٹ میں تبادلہ خیال کریں",
+    "newsletter_title": "AI کے بارے میں سب سے آگے رہیں",
+    "newsletter_desc": "AI تحقیق کا ہفتہ وار ڈائجسٹ۔",
+    "newsletter_placeholder": "aap@email.com",
+    "newsletter_subscribe": "سبسکرائب کریں"
   }
 }
+

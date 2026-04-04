@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { RootState } from '@/store';
 import { openModal } from '@/store/modalSlice';
 import { openApp } from '@/store/appSlice';
@@ -39,6 +40,7 @@ function AgentTemplateSkeleton() {
 }
 
 export default function AgentsView() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const models = useSelector((s: RootState) => s.models.items);
   const { templates, status } = useSelector((s: RootState) => s.agent);
@@ -63,16 +65,16 @@ export default function AgentsView() {
       <div className="flex items-start justify-between mb-2 flex-wrap gap-3">
         <div>
           <h2 className="font-syne text-[1.3rem] sm:text-[1.6rem] font-bold text-text1 mb-1" style={{ letterSpacing: '-0.03em' }}>
-            Agent Builder
+            {t('agents.header_title')}
           </h2>
-          <p className="text-[0.82rem] sm:text-[0.9rem] text-text2">Create powerful AI agents using any model.</p>
+          <p className="text-[0.82rem] sm:text-[0.9rem] text-text2">{t('agents.header_subtitle')}</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
           onClick={() => handleTemplate('gpt5', true)}
           className="flex items-center gap-1.5 bg-accent text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-[0.82rem] sm:text-[0.85rem] font-medium hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
         >
-          <FiPlus size={15} /> New Agent
+          <FiPlus size={15} /> {t('agents.button_new_agent')}
         </motion.button>
       </div>
 
@@ -80,21 +82,21 @@ export default function AgentsView() {
       <div className="bg-white border border-accent/25 rounded-sm p-3 sm:p-4 mb-5 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3" style={{ borderRadius: 12 }}>
         <div className="text-2xl flex-shrink-0">✦</div>
         <div className="flex-1 min-w-0">
-          <div className="text-[0.85rem] font-semibold text-text1 mb-0.5">Not sure where to start?</div>
-          <div className="text-[0.78rem] sm:text-[0.8rem] text-text2">Chat with our AI guide — describe your agent and get a personalised setup plan.</div>
+          <div className="text-[0.85rem] font-semibold text-text1 mb-0.5">{t('agents.banner_title')}</div>
+          <div className="text-[0.78rem] sm:text-[0.8rem] text-text2">{t('agents.banner_description')}</div>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
           onClick={handleAskHub}
           className="border border-black/[0.14] text-text1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[0.78rem] sm:text-[0.8rem] font-medium hover:border-accent hover:text-accent transition-all whitespace-nowrap cursor-pointer bg-none font-instrument flex-shrink-0"
         >
-          Ask the Hub →
+          {t('agents.banner_cta')}
         </motion.button>
       </div>
 
       {/* Templates label */}
       <div className="font-syne text-[0.78rem] sm:text-[0.9rem] font-bold text-text3 uppercase tracking-[0.06em] mb-3 sm:mb-4">
-        Agent Templates
+        {t('agents.templates_label')}
       </div>
 
       {/* Templates grid — 1 col → 2 col → 3 col */}
