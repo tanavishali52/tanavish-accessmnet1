@@ -7,6 +7,7 @@ import { addMessage, setIsTyping, setOnboardPhase, setObDone, ChatAttachment } f
 import { showToast } from '@/store/appSlice';
 import { motion } from 'framer-motion';
 import { apiChatMessage, Model } from '@/lib/api';
+import { useChatPersistence } from '@/hooks/useChatPersistence';
 import { useTranslation } from 'react-i18next';
 import { FiSend, FiMic, FiPaperclip, FiImage, FiX } from 'react-icons/fi';
 
@@ -47,6 +48,7 @@ export default function ChatInput() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { obDone, currentModelId, userGoal, userAudience, userLevel, userBudget } = useSelector((s: RootState) => s.chat);
+  const { createNewSession, saveMessageToDb } = useChatPersistence();
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [activeCat, setActiveCat] = useState('usecases');
@@ -161,18 +163,29 @@ export default function ChatInput() {
   const handleSend = useCallback(async () => {
     const tVal = text.trim();
     if (!tVal && attachments.length === 0) return;
-    setText('');
     const payloadText = tVal || `Attached ${attachments.length} file${attachments.length > 1 ? 's' : ''}`;
+    const userMessageId = `local_${Date.now()}`;
+
+    await createNewSession();
+
     dispatch(addMessage({
-      id: Date.now().toString(),
+      id: userMessageId,
       role: 'user',
       content: payloadText,
       attachments: attachments.length > 0 ? attachments : undefined,
       timestamp: Date.now(),
     }));
+    setText('');
     setAttachments([]);
     dispatch(setIsTyping(true));
     if (!obDone) { dispatch(setOnboardPhase('chat')); dispatch(setObDone(true)); }
+
+    await saveMessageToDb({
+      id: userMessageId,
+      role: 'user',
+      content: payloadText,
+      attachments: attachments.length > 0 ? attachments : undefined,
+    });
 
     const context = userGoal || userAudience || userLevel || userBudget
       ? { goal: userGoal || undefined, audience: userAudience || undefined, level: userLevel || undefined, budget: userBudget || undefined }
@@ -186,12 +199,21 @@ export default function ChatInput() {
         return local ?? r;
       }) as Model[];
       dispatch(setIsTyping(false));
-      dispatch(addMessage({ id: (Date.now() + 1).toString(), role: 'ai', content: reply.text, recs, timestamp: Date.now() + 1 }));
-    } catch {
+      const aiMessageId = `local_${Date.now() + 1}`;
+      dispatch(addMessage({ id: aiMessageId, role: 'ai', content: reply.text, recs, timestamp: Date.now() + 1 }));
+      await saveMessageToDb({
+        id: aiMessageId,
+        role: 'ai',
+        content: reply.text,
+        recs,
+      });
+    } catch (error) {
       dispatch(setIsTyping(false));
-      dispatch(addMessage({ id: (Date.now() + 1).toString(), role: 'ai', content: 'Sorry, something went wrong. Please try again.', timestamp: Date.now() + 1 }));
+      console.error('Chat error:', error);
+      const errorMessageId = `local_${Date.now() + 1}`;
+      dispatch(addMessage({ id: errorMessageId, role: 'ai', content: 'Sorry, something went wrong. Please try again.', timestamp: Date.now() + 1 }));
     }
-  }, [text, attachments, dispatch, obDone, userGoal, userAudience, userLevel, userBudget]);
+  }, [text, attachments, dispatch, obDone, userGoal, userAudience, userLevel, userBudget, catalog, createNewSession, saveMessageToDb]);
 
   return (
     <div className="bg-white border-t border-black/[0.08] flex-shrink-0">

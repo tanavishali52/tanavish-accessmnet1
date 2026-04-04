@@ -17,9 +17,20 @@ export interface ChatMessage {
   recs?: Model[];
   attachments?: ChatAttachment[];
   timestamp: number;
+  savedId?: string;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  isGuest: boolean;
+  createdAt: number;
+  updatedAt: number;
 }
 
 interface ChatState {
+  currentSessionId: string | null; // Current active session
+  sessions: ChatSession[]; // List of user's sessions
   messages: ChatMessage[];
   onboardPhase: OnboardPhase;
   obDone: boolean;
@@ -30,9 +41,13 @@ interface ChatState {
   currentModelId: string;
   pendingRecs: Model[];
   isTyping: boolean;
+  isSaving: boolean; // Track if messages are being saved
+  hasUnsavedChanges: boolean; // Track if there are unsaved messages
 }
 
 const initialState: ChatState = {
+  currentSessionId: null,
+  sessions: [],
   messages: [],
   onboardPhase: 'start',
   obDone: false,
@@ -43,15 +58,55 @@ const initialState: ChatState = {
   currentModelId: 'gpt5',
   pendingRecs: [],
   isTyping: false,
+  isSaving: false,
+  hasUnsavedChanges: false,
 };
 
 const chatSlice = createSlice({
   name: 'chat',
   initialState,
   reducers: {
+    // Session Management
+    setCurrentSessionId(state, action: PayloadAction<string | null>) {
+      state.currentSessionId = action.payload;
+    },
+    setSessions(state, action: PayloadAction<ChatSession[]>) {
+      state.sessions = action.payload;
+    },
+    addSession(state, action: PayloadAction<ChatSession>) {
+      state.sessions.push(action.payload);
+      state.currentSessionId = action.payload.id;
+    },
+    updateSession(state, action: PayloadAction<ChatSession>) {
+      const index = state.sessions.findIndex((s) => s.id === action.payload.id);
+      if (index >= 0) {
+        state.sessions[index] = action.payload;
+      }
+    },
+    removeSession(state, action: PayloadAction<string>) {
+      state.sessions = state.sessions.filter((s) => s.id !== action.payload);
+      if (state.currentSessionId === action.payload) {
+        state.currentSessionId = state.sessions.length > 0 ? state.sessions[0].id : null;
+      }
+    },
+    
+    // Message Management
     addMessage(state, action: PayloadAction<ChatMessage>) {
       state.messages.push(action.payload);
+      state.hasUnsavedChanges = true;
     },
+    setMessages(state, action: PayloadAction<ChatMessage[]>) {
+      state.messages = action.payload;
+      state.hasUnsavedChanges = false;
+    },
+    markMessageSaved(state, action: PayloadAction<{ id: string; savedId: string }>) {
+      const index = state.messages.findIndex((m) => m.id === action.payload.id);
+      if (index >= 0) {
+        state.messages[index].savedId = action.payload.savedId;
+      }
+    },
+    
+    // Onboarding & Context
     setOnboardPhase(state, action: PayloadAction<OnboardPhase>) {
       state.onboardPhase = action.payload;
     },
@@ -70,6 +125,8 @@ const chatSlice = createSlice({
     setUserBudget(state, action: PayloadAction<string>) {
       state.userBudget = action.payload;
     },
+    
+    // Model & Loading States
     setCurrentModelId(state, action: PayloadAction<string>) {
       state.currentModelId = action.payload;
     },
@@ -79,8 +136,17 @@ const chatSlice = createSlice({
     setIsTyping(state, action: PayloadAction<boolean>) {
       state.isTyping = action.payload;
     },
+    setIsSaving(state, action: PayloadAction<boolean>) {
+      state.isSaving = action.payload;
+    },
+    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
+      state.hasUnsavedChanges = action.payload;
+    },
+    
+    // Utility Actions
     clearMessages(state) {
       state.messages = [];
+      state.hasUnsavedChanges = false;
     },
     resetChat() {
       return initialState;
@@ -89,8 +155,27 @@ const chatSlice = createSlice({
 });
 
 export const {
-  addMessage, setOnboardPhase, setObDone, setUserGoal, setUserAudience,
-  setUserLevel, setUserBudget, setCurrentModelId, setPendingRecs,
-  setIsTyping, clearMessages, resetChat,
+  setCurrentSessionId,
+  setSessions,
+  addSession,
+  updateSession,
+  removeSession,
+  addMessage,
+  setMessages,
+  markMessageSaved,
+  setOnboardPhase,
+  setObDone,
+  setUserGoal,
+  setUserAudience,
+  setUserLevel,
+  setUserBudget,
+  setCurrentModelId,
+  setPendingRecs,
+  setIsTyping,
+  setIsSaving,
+  setHasUnsavedChanges,
+  clearMessages,
+  resetChat,
 } = chatSlice.actions;
+
 export default chatSlice.reducer;

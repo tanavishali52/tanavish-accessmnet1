@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
 interface BackendResponse<T> {
   success: boolean;
@@ -202,9 +202,119 @@ export interface ChatReply {
   recs: unknown[];
 }
 
+// Chat Session Types
+export interface ChatAttachmentType {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
+export interface ModelRecommendationType {
+  id: string;
+  name: string;
+  description?: string;
+  rating?: number;
+  price_start?: number;
+}
+
+export interface ChatMessageRecord {
+  _id: string;
+  conversationId: string;
+  role: 'user' | 'ai';
+  content: string;
+  attachments?: ChatAttachmentType[];
+  recs?: ModelRecommendationType[];
+  createdAt: string;
+}
+
+export interface ChatSessionRecord {
+  _id: string;
+  sessionId: string;
+  isGuest: boolean;
+  title: string;
+  context?: ChatContext;
+  currentModelId?: string;
+  messages?: ChatMessageRecord[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Existing endpoints
 export function apiChatMessage(message: string, context?: ChatContext) {
   return request<ChatReply>('/chat/message', {
     method: 'POST',
     body: JSON.stringify({ message, context }),
+  });
+}
+
+// New Session Management endpoints
+export function apiCreateChatSession(payload: {
+  sessionId: string;
+  isGuest: boolean;
+  title?: string;
+  context?: ChatContext;
+  currentModelId?: string;
+}) {
+  return request<ChatSessionRecord>('/chat/session/create', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function apiGetChatSession(sessionId: string) {
+  return request<ChatSessionRecord>(`/chat/session/${sessionId}`);
+}
+
+export function apiGetUserChats(userId: string) {
+  return request<ChatSessionRecord[]>(`/chat/sessions/${userId}`);
+}
+
+export function apiUpdateChatSession(sessionId: string, payload: {
+  title?: string;
+  context?: ChatContext;
+  currentModelId?: string;
+}) {
+  return request<ChatSessionRecord>(`/chat/session/${sessionId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function apiDeleteChatSession(sessionId: string) {
+  return request<{ success: boolean }>(`/chat/session/${sessionId}`, {
+    method: 'DELETE',
+  });
+}
+
+export function apiDeleteAllUserChats(userId: string) {
+  return request<{ success: boolean }>(`/chat/sessions/${userId}`, {
+    method: 'DELETE',
+  });
+}
+
+// Message Management endpoints
+export function apiSaveChatMessage(
+  sessionId: string,
+  payload: {
+    role: 'user' | 'ai';
+    content: string;
+    recs?: ModelRecommendationType[];
+    attachments?: ChatAttachmentType[];
+  },
+) {
+  return request<ChatMessageRecord>(`/chat/session/${sessionId}/message`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function apiGetChatMessages(sessionId: string) {
+  return request<ChatMessageRecord[]>(`/chat/session/${sessionId}/messages`);
+}
+
+export function apiDeleteChatMessage(messageId: string, sessionId: string) {
+  return request<{ success: boolean }>(`/chat/message/${messageId}/${sessionId}`, {
+    method: 'DELETE',
   });
 }

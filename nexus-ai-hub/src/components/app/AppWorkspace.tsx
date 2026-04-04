@@ -14,7 +14,7 @@ import { ActiveTab, openApp } from '@/store/appSlice';
 import { setSession } from '@/store/authSlice';
 import { setModels, setModelsLoading, setModelsError, setLabs, setResearch } from '@/store/modelsSlice';
 import { setTemplates, setAgentsLoading, setAgentsError } from '@/store/agentSlice';
-import { apiSession, apiModels, apiLabs, apiAgents, apiResearch } from '@/lib/api';
+import { apiSession, apiGuest, apiModels, apiLabs, apiAgents, apiResearch } from '@/lib/api';
 import type { Model, Lab, AgentTemplate, ResearchItem } from '@/lib/api';
 
 export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
@@ -47,7 +47,7 @@ export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
       });
   }, [dispatch]);
 
-  // Restore session from backend cookie on mount
+  // Restore session from backend cookie on mount, or create guest session
   useEffect(() => {
     apiSession()
       .then(({ authenticated, user }) => {
@@ -58,13 +58,44 @@ export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
             email: user.email,
             avatar: user.name[0]?.toUpperCase() ?? 'U',
             plan: user.plan,
+            guestMode: false,
           }));
         } else {
-          dispatch(setSession(null));
+          // No authenticated user, create guest session
+          apiGuest()
+            .then((guestUser) => {
+              dispatch(setSession({
+                id: guestUser.id,
+                name: guestUser.name,
+                email: guestUser.email,
+                avatar: guestUser.name[0]?.toUpperCase() ?? 'G',
+                plan: guestUser.plan,
+                guestMode: true,
+              }));
+            })
+            .catch(() => {
+              console.error('Failed to create guest session');
+              dispatch(setSession(null));
+            });
         }
       })
       .catch(() => {
-        dispatch(setSession(null));
+        // If session check fails, try guest mode
+        apiGuest()
+          .then((guestUser) => {
+            dispatch(setSession({
+              id: guestUser.id,
+              name: guestUser.name,
+              email: guestUser.email,
+              avatar: guestUser.name[0]?.toUpperCase() ?? 'G',
+              plan: guestUser.plan,
+              guestMode: true,
+            }));
+          })
+          .catch(() => {
+            console.error('Failed to create guest session');
+            dispatch(setSession(null));
+          });
       });
   }, [dispatch]);
 

@@ -6,6 +6,7 @@ export interface AuthUser {
   email: string;
   avatar?: string;
   plan: 'free' | 'pro' | 'enterprise';
+  guestMode?: boolean;
 }
 
 interface AuthState {

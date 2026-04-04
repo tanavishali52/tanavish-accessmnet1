@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model as MongooseModel, Types } from 'mongoose';
 import { MODELS } from '../data/static-data';
 import { ChatContextDto } from './dto/chat-message.dto';
+import { ChatSession, ChatSessionDocument } from './schemas/chat-session.schema';
+import { ChatMessage, ChatMessageDocument } from './schemas/chat-message.schema';
+import { CreateChatSessionDto, UpdateChatSessionDto, SaveChatMessageDto } from './dto/chat-session.dto';
 
 type Model = (typeof MODELS)[number];
 
@@ -11,11 +16,134 @@ export interface ReplyResult {
 
 @Injectable()
 export class ChatService {
+  constructor(
+    @InjectModel(ChatSession.name) private readonly sessionModel: MongooseModel<ChatSessionDocument>,
+    @InjectModel(ChatMessage.name) private readonly messageModel: MongooseModel<ChatMessageDocument>,
+  ) {}
+
+  // ────────────────────────────────────────────────────────────────────
+  // Session Management
+  // ────────────────────────────────────────────────────────────────────
+
+  async createSession(dto: CreateChatSessionDto) {
+    const session = new this.sessionModel({
+      sessionId: dto.sessionId,
+      isGuest: dto.isGuest,
+      title: dto.title ?? 'Untitled Chat',
+      context: dto.context ?? {},
+      currentModelId: dto.currentModelId ?? '',
+      messages: [],
+    });
+    return session.save();
+  }
+
+  async getSession(sessionId: string) {
+    const session = await this.sessionModel
+      .findOne({ _id: sessionId })
+      .populate({
+        path: 'messages',
+        options: { sort: { createdAt: 1 } },
+      })
+      .lean();
+
+    if (!session) throw new NotFoundException('Chat session not found');
+    return session;
+  }
+
+  async getUserSessions(userId: string) {
+    return this.sessionModel
+      .find({ sessionId: userId })
+      .select('_id title context currentModelId createdAt updatedAt')
+      .sort({ updatedAt: -1 })
+      .lean();
+  }
+
+  async updateSession(sessionId: string, dto: UpdateChatSessionDto) {
+    const updated = await this.sessionModel.findByIdAndUpdate(
+      sessionId,
+      { ...dto, updatedAt: new Date() },
+      { new: true },
+    );
+    if (!updated) throw new NotFoundException('Chat session not found');
+    return updated;
+  }
+
+  async deleteSession(sessionId: string) {
+    const session = await this.sessionModel.findByIdAndDelete(sessionId);
+    if (!session) throw new NotFoundException('Chat session not found');
+
+    // Delete all messages in this session
+    await this.messageModel.deleteMany({ conversationId: sessionId });
+    return { success: true };
+  }
+
+  async deleteAllUserSessions(userId: string) {
+    const sessions = await this.sessionModel.find({ sessionId: userId });
+    await this.messageModel.deleteMany({
+      conversationId: { $in: sessions.map((s) => s._id) },
+    });
+    await this.sessionModel.deleteMany({ sessionId: userId });
+    return { success: true };
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // Message Management
+  // ────────────────────────────────────────────────────────────────────
+
+  async saveMessage(sessionId: string, dto: SaveChatMessageDto) {
+    const session = await this.sessionModel.findById(sessionId);
+    if (!session) throw new NotFoundException('Chat session not found');
+
+    const message = new this.messageModel({
+      conversationId: new Types.ObjectId(sessionId),
+      role: dto.role,
+      content: dto.content,
+      recs: dto.recs ?? [],
+      attachments: dto.attachments ?? [],
+      createdAt: new Date(),
+    });
+
+    const savedMessage = await message.save();
+
+    await this.sessionModel.findByIdAndUpdate(
+      sessionId,
+      {
+        $push: { messages: savedMessage._id },
+        updatedAt: new Date(),
+      },
+    );
+
+    return savedMessage;
+  }
+
+  async getSessionMessages(sessionId: string) {
+    const messages = await this.messageModel
+      .find({ conversationId: new Types.ObjectId(sessionId) })
+      .sort({ createdAt: 1 })
+      .lean();
+    return messages;
+  }
+
+  async deleteMessage(messageId: string, sessionId: string) {
+    const message = await this.messageModel.findByIdAndDelete(messageId);
+    if (!message) throw new NotFoundException('Message not found');
+
+    await this.sessionModel.findByIdAndUpdate(
+      sessionId,
+      { $pull: { messages: messageId } },
+    );
+
+    return { success: true };
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // AI Response & Recommendations
+  // ────────────────────────────────────────────────────────────────────
+
   reply(message: string, context?: ChatContextDto): ReplyResult {
     const msg = message.toLowerCase();
     let candidates = [...MODELS];
 
-    // Apply budget filter from context
     if (context?.budget) {
       const budget = context.budget.toLowerCase();
       if (budget.includes('free')) {
@@ -27,7 +155,6 @@ export class ChatService {
       }
     }
 
-    // Apply goal filter from context
     if (context?.goal) {
       const goal = context.goal.toLowerCase();
       let goalFiltered: Model[] = [];
@@ -51,7 +178,6 @@ export class ChatService {
       if (goalFiltered.length > 0) candidates = goalFiltered;
     }
 
-    // Score each model based on message keywords
     const scored = candidates.map((m) => ({ model: m, score: this.score(m, msg) }));
     scored.sort((a, b) => b.score - a.score || b.model.rating - a.model.rating);
     const top = scored.slice(0, 3).map((s) => s.model);
@@ -84,7 +210,6 @@ export class ChatService {
         if (check.typeMatch && model.types.includes(check.typeMatch)) score += check.points;
         else if (check.tagMatch && model.tags.some((t) => t.toLowerCase().includes(check.tagMatch!))) score += check.points;
         else if (!check.typeMatch && !check.tagMatch) {
-          // Generic keyword hit — boost by price or rating
           if (check.keywords.some((kw) => ['cheap', 'free', 'budget', 'affordable', 'low cost', 'inexpensive'].includes(kw))) {
             score += (10 - Math.min(model.price_start, 10));
           } else {
@@ -94,7 +219,6 @@ export class ChatService {
       }
     }
 
-    // Tiebreak by rating
     score += model.rating / 10;
     return score;
   }
@@ -137,3 +261,4 @@ export class ChatService {
     return `Based on your query, here are the best matching models:`;
   }
 }
+
