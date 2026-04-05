@@ -11,31 +11,6 @@ import { useChatPersistence } from '@/hooks/useChatPersistence';
 import { useTranslation } from 'react-i18next';
 import { FiSend, FiMic, FiPaperclip, FiImage, FiX } from 'react-icons/fi';
 
-type SpeechRecognitionEventLike = Event & {
-  results: ArrayLike<{
-    isFinal: boolean;
-    0: { transcript: string };
-  }>;
-};
-
-type SpeechRecognitionLike = EventTarget & {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: ((event: Event & { error?: string }) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-
-type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
-
-type WindowWithSpeech = Window & {
-  SpeechRecognition?: SpeechRecognitionCtor;
-  webkitSpeechRecognition?: SpeechRecognitionCtor;
-};
-
 const getCategoryTabs = (t: any) => [
   { id: 'usecases', label: `⚡ ${t('chat.area.modes.usecases')}`, prompts: [t('chat.area.suggestions.summarise'), t('chat.area.suggestions.product_desc'), t('chat.area.suggestions.content_calendar'), t('chat.area.suggestions.pro_email')] },
   { id: 'code',     label: `💻 ${t('chat.area.modes.code')}`,      prompts: ['Review my code for bugs', 'Write unit tests', 'Explain this algorithm', 'Optimise this SQL query'] },
@@ -51,12 +26,14 @@ export default function ChatInput() {
   const { createNewSession, saveMessageToDb } = useChatPersistence();
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const [activeCat, setActiveCat] = useState('usecases');
-  const [micActive, setMicActive] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const { items: catalog } = useSelector((s: RootState) => s.models);
   const currentModel = catalog.find((m) => m.id === currentModelId);
@@ -77,88 +54,153 @@ export default function ChatInput() {
 
     setAttachments((prev) => {
       const map = new Map(prev.map((a) => [`${a.name}-${a.size}-${a.type}`, a]));
+      const newAttachments: ChatAttachment[] = [];
       for (const f of picked) {
         const key = `${f.name}-${f.size}-${f.type}`;
         if (!map.has(key)) {
-          map.set(key, {
+          const attachment = {
             id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
             name: f.name,
             size: f.size,
-            type: f.type || 'application/octet-stream',
-          });
+            type: f.mimetype || f.type || 'application/octet-stream',
+          };
+          map.set(key, attachment);
+          newAttachments.push(attachment);
         }
       }
       const next = Array.from(map.values()).slice(0, MAX_ATTACHMENTS);
-      if (next.length >= MAX_ATTACHMENTS) {
-        dispatch(showToast(`Up to ${MAX_ATTACHMENTS} files can be attached.`));
-      }
       return next;
     });
+
+    setAttachmentFiles((prev) => {
+      const existingKeys = new Set(prev.map((f) => `${f.name}-${f.size}-${f.type}`));
+      const newFiles = picked.filter((f) => !existingKeys.has(`${f.name}-${f.size}-${f.type}`));
+      return [...prev, ...newFiles].slice(0, MAX_ATTACHMENTS);
+    });
+
+    if (picked.length + attachments.length > MAX_ATTACHMENTS) {
+      dispatch(showToast(`Up to ${MAX_ATTACHMENTS} files can be attached.`));
+    }
   };
 
   const removeAttachment = (id: string) => {
     setAttachments((prev) => prev.filter((a) => a.id !== id));
+    setAttachmentFiles((prev) => {
+      const attachment = attachments.find((a) => a.id === id);
+      if (attachment) {
+        return prev.filter((f) => 
+          !(f.name === attachment.name && f.size === attachment.size && f.type === attachment.type)
+        );
+      }
+      return prev;
+    });
   };
 
-  const startVoiceInput = () => {
-    const speechWindow = window as WindowWithSpeech;
-    const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
-    if (!Recognition) {
-      dispatch(showToast('Voice input is not supported in this browser.'));
+  const startVoiceRecording = async () => {
+    // Check if MediaRecorder is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      dispatch(showToast('Voice recording is not supported in this browser.'));
+      return;
+    }
+
+    if (!window.MediaRecorder) {
+      dispatch(showToast('Audio recording is not supported in this browser.'));
       return;
     }
 
     try {
-      const recognition = new Recognition();
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = true;
-
-      recognition.onresult = (event) => {
-        let transcript = '';
-        for (let i = 0; i < event.results.length; i += 1) {
-          transcript += event.results[i][0].transcript;
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        } 
+      });
+      
+      // Check for supported MIME types
+      let mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/mp4';
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = ''; // Let browser choose
+          }
         }
-        setText((prev) => {
-          const base = prev.trim();
-          const voice = transcript.trim();
-          if (!voice) return prev;
-          return base ? `${base} ${voice}` : voice;
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+      
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' });
+        const fileExtension = mediaRecorder.mimeType?.includes('webm') ? 'webm' : 
+                             mediaRecorder.mimeType?.includes('mp4') ? 'mp4' : 'webm';
+        const audioFile = new File([audioBlob], `voice-${Date.now()}.${fileExtension}`, { 
+          type: mediaRecorder.mimeType || 'audio/webm'
         });
+        
+        // Add the audio file to attachments
+        pickFiles([audioFile] as any);
+        
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+        
+        dispatch(showToast('Voice recording saved as attachment'));
       };
 
-      recognition.onerror = (event) => {
-        if (event.error && event.error !== 'no-speech') {
-          dispatch(showToast(`Mic error: ${event.error}`));
+      mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+        dispatch(showToast('Recording failed'));
+        setIsRecording(false);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      dispatch(showToast('Recording... Tap the mic button again to stop'));
+      
+    } catch (error) {
+      console.error('Error starting voice recording:', error);
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          dispatch(showToast('Microphone access denied. Please allow microphone access.'));
+        } else if (error.name === 'NotFoundError') {
+          dispatch(showToast('No microphone found.'));
+        } else {
+          dispatch(showToast('Could not start recording. Please check your microphone.'));
         }
-        setMicActive(false);
-      };
-
-      recognition.onend = () => {
-        setMicActive(false);
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-      setMicActive(true);
-      dispatch(showToast(t('chat.sidebar.loading'))); // Using loading as a proxy for "Listening..." for now
-    } catch {
-      setMicActive(false);
-      dispatch(showToast('Unable to start voice recording.'));
+      } else {
+        dispatch(showToast('Could not access microphone. Please check permissions.'));
+      }
+      setIsRecording(false);
     }
   };
 
-  const stopVoiceInput = () => {
-    recognitionRef.current?.stop();
-    setMicActive(false);
-    dispatch(showToast('Mic off'));
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      dispatch(showToast('Recording stopped'));
+    }
   };
 
   useEffect(() => {
     return () => {
-      recognitionRef.current?.stop();
+      // Cleanup media recorder on unmount
+      if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stop();
+      }
     };
-  }, []);
+  }, [isRecording]);
 
   const handleSend = useCallback(async () => {
     const tVal = text.trim();
@@ -177,6 +219,7 @@ export default function ChatInput() {
     }));
     setText('');
     setAttachments([]);
+    setAttachmentFiles([]);
     dispatch(setIsTyping(true));
     if (!obDone) { dispatch(setOnboardPhase('chat')); dispatch(setObDone(true)); }
 
@@ -193,7 +236,7 @@ export default function ChatInput() {
 
     try {
       const source = tVal || 'shared files';
-      const reply = await apiChatMessage(source, context);
+      const reply = await apiChatMessage(source, context, attachmentFiles.length > 0 ? attachmentFiles : undefined);
       const recs = (reply.recs as Model[]).map((r) => {
         const local = catalog.find((m) => m.id === r.id);
         return local ?? r;
@@ -312,10 +355,10 @@ export default function ChatInput() {
             />
             <button
               onClick={() => {
-                if (micActive) stopVoiceInput();
-                else startVoiceInput();
+                if (isRecording) stopVoiceRecording();
+                else startVoiceRecording();
               }}
-              className={`w-7 h-7 rounded-[6px] flex items-center justify-center transition-all border-none cursor-pointer ${micActive ? 'bg-red-50 text-red-500' : 'bg-none text-text3 hover:bg-bg2 hover:text-text1'}`}
+              className={`w-7 h-7 rounded-[6px] flex items-center justify-center transition-all border-none cursor-pointer ${isRecording ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-none text-text3 hover:bg-bg2 hover:text-text1'}`}
             >
               <FiMic size={14} />
             </button>

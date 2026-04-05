@@ -92,27 +92,6 @@ export function useChatPersistence({ autoSave = true, autoLoadSessions = true }:
     [userId, isGuest, userGoal, userAudience, userLevel, userBudget, currentModelId, dispatch],
   );
 
-  const loadUserSessions = useCallback(async () => {
-    if (!userId) return;
-
-    try {
-      const sessions = await apiGetUserChats(userId);
-      dispatch(
-        setSessions(
-          sessions.map((s) => ({
-            id: s._id,
-            title: s.title,
-            isGuest: s.isGuest,
-            createdAt: new Date(s.createdAt).getTime(),
-            updatedAt: new Date(s.updatedAt).getTime(),
-          })),
-        ),
-      );
-    } catch (error) {
-      console.error('Failed to load user sessions:', error);
-    }
-  }, [userId, dispatch]);
-
   const loadSession = useCallback(
     async (sessionId: string) => {
       try {
@@ -145,6 +124,35 @@ export function useChatPersistence({ autoSave = true, autoLoadSessions = true }:
     },
     [dispatch],
   );
+
+  const loadUserSessions = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      const sessions = await apiGetUserChats(userId);
+      dispatch(
+        setSessions(
+          sessions.map((s) => ({
+            id: s._id,
+            title: s.title,
+            isGuest: s.isGuest,
+            createdAt: new Date(s.createdAt).getTime(),
+            updatedAt: new Date(s.updatedAt).getTime(),
+          })),
+        ),
+      );
+
+      // Auto-load the most recent session if no current session is set
+      if (sessions.length > 0 && !currentSessionId) {
+        const mostRecentSession = sessions.sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        )[0];
+        await loadSession(mostRecentSession._id);
+      }
+    } catch (error) {
+      console.error('Failed to load user sessions:', error);
+    }
+  }, [userId, dispatch, currentSessionId, loadSession]);
 
   const updateSessionMetadata = useCallback(
     async (sessionId: string, title?: string) => {

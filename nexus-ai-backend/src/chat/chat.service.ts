@@ -12,6 +12,7 @@ type Model = (typeof MODELS)[number];
 export interface ReplyResult {
   text: string;
   recs: Model[];
+  attachments?: { id: string; name: string; size: number; type: string; url?: string }[];
 }
 
 @Injectable()
@@ -140,7 +141,7 @@ export class ChatService {
   // AI Response & Recommendations
   // ────────────────────────────────────────────────────────────────────
 
-  reply(message: string, context?: ChatContextDto): ReplyResult {
+  reply(message: string, context?: ChatContextDto, files?: Express.Multer.File[]): ReplyResult {
     const msg = message.toLowerCase();
     let candidates = [...MODELS];
 
@@ -182,7 +183,19 @@ export class ChatService {
     scored.sort((a, b) => b.score - a.score || b.model.rating - a.model.rating);
     const top = scored.slice(0, 3).map((s) => s.model);
 
-    return { text: this.buildText(msg, context), recs: top };
+    // Process uploaded files
+    let attachments: { id: string; name: string; size: number; type: string; url?: string }[] = [];
+    if (files && files.length > 0) {
+      attachments = files.map((file) => ({
+        id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        name: file.originalname,
+        size: file.size,
+        type: file.mimetype,
+        url: `/uploads/${file.filename}`, // URL to access the file
+      }));
+    }
+
+    return { text: this.buildText(msg, context), recs: top, attachments };
   }
 
   private score(model: Model, msg: string): number {

@@ -1,5 +1,6 @@
-import { Body, Controller, Post, Get, Put, Delete, Param } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
+import { Body, Controller, Post, Get, Put, Delete, Param, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiOperation, ApiTags, ApiParam, ApiConsumes } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { ChatMessageDto } from './dto/chat-message.dto';
 import { CreateChatSessionDto, UpdateChatSessionDto, SaveChatMessageDto } from './dto/chat-session.dto';
@@ -106,10 +107,50 @@ export class ChatController {
   // ────────────────────────────────────────────────────────────────────
 
   @Post('message')
-  @ApiOperation({ summary: 'Send a message and receive smart model recommendations' })
-  @ApiBody({ type: ChatMessageDto })
-  sendMessage(@Body() dto: ChatMessageDto) {
-    return this.chatService.reply(dto.message, dto.context);
+  @UseInterceptors(FilesInterceptor('files', 10)) // Allow up to 10 files
+  @ApiOperation({
+    summary: 'Send a message and receive smart model recommendations',
+    description: 'Send a text message with optional file attachments. Files are uploaded as multipart/form-data and stored on the server.'
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Message data with optional file attachments',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          description: 'The text message content',
+          example: 'I need a model for coding tasks'
+        },
+        context: {
+          type: 'object',
+          description: 'Optional context for model recommendations',
+          properties: {
+            goal: { type: 'string', example: 'Code & Dev' },
+            audience: { type: 'string', example: 'Small business' },
+            level: { type: 'string', example: 'Intermediate dev' },
+            budget: { type: 'string', example: 'Under $50/mo' }
+          }
+        },
+        files: {
+          type: 'array',
+          description: 'Optional file attachments (max 10 files, 10MB each)',
+          items: {
+            type: 'string',
+            format: 'binary',
+            description: 'File to upload'
+          }
+        },
+      },
+      required: ['message']
+    },
+  })
+  sendMessage(
+    @Body() dto: ChatMessageDto,
+    @UploadedFiles() files?: Express.Multer.File[],
+  ) {
+    return this.chatService.reply(dto.message, dto.context, files);
   }
 }
 

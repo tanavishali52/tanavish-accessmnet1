@@ -200,6 +200,7 @@ export interface ChatContext {
 export interface ChatReply {
   text: string;
   recs: unknown[];
+  attachments?: ChatAttachmentType[];
 }
 
 // Chat Session Types
@@ -241,11 +242,30 @@ export interface ChatSessionRecord {
 }
 
 // Existing endpoints
-export function apiChatMessage(message: string, context?: ChatContext) {
-  return request<ChatReply>('/chat/message', {
-    method: 'POST',
-    body: JSON.stringify({ message, context }),
-  });
+export function apiChatMessage(message: string, context?: ChatContext, attachments?: File[]) {
+  if (attachments && attachments.length > 0) {
+    // Send as FormData for file uploads
+    const formData = new FormData();
+    formData.append('message', message);
+    if (context) {
+      formData.append('context', JSON.stringify(context));
+    }
+    attachments.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    return request<ChatReply>('/chat/message', {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Let browser set Content-Type for FormData
+    });
+  } else {
+    // Send as JSON for text-only messages
+    return request<ChatReply>('/chat/message', {
+      method: 'POST',
+      body: JSON.stringify({ message, context }),
+    });
+  }
 }
 
 // New Session Management endpoints
