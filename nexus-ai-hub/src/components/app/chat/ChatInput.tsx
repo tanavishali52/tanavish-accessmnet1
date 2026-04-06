@@ -206,6 +206,8 @@ export default function ChatInput() {
     const tVal = text.trim();
     if (!tVal && attachments.length === 0) return;
     const payloadText = tVal || `Attached ${attachments.length} file${attachments.length > 1 ? 's' : ''}`;
+    const filesSnapshot = [...attachmentFiles];
+    const attachmentsSnapshot = [...attachments];
     const userMessageId = `local_${Date.now()}`;
 
     await createNewSession();
@@ -214,7 +216,7 @@ export default function ChatInput() {
       id: userMessageId,
       role: 'user',
       content: payloadText,
-      attachments: attachments.length > 0 ? attachments : undefined,
+      attachments: attachmentsSnapshot.length > 0 ? attachmentsSnapshot : undefined,
       timestamp: Date.now(),
     }));
     setText('');
@@ -227,7 +229,7 @@ export default function ChatInput() {
       id: userMessageId,
       role: 'user',
       content: payloadText,
-      attachments: attachments.length > 0 ? attachments : undefined,
+      attachments: attachmentsSnapshot.length > 0 ? attachmentsSnapshot : undefined,
     });
 
     const context = userGoal || userAudience || userLevel || userBudget
@@ -235,8 +237,11 @@ export default function ChatInput() {
       : undefined;
 
     try {
-      const source = tVal || 'shared files';
-      const reply = await apiChatMessage(source, context, attachmentFiles.length > 0 ? attachmentFiles : undefined);
+      const reply = await apiChatMessage(
+        payloadText,
+        context,
+        filesSnapshot.length > 0 ? filesSnapshot : undefined,
+      );
       const recs = (reply.recs as Model[]).map((r) => {
         const local = catalog.find((m) => m.id === r.id);
         return local ?? r;
@@ -256,7 +261,7 @@ export default function ChatInput() {
       const errorMessageId = `local_${Date.now() + 1}`;
       dispatch(addMessage({ id: errorMessageId, role: 'ai', content: 'Sorry, something went wrong. Please try again.', timestamp: Date.now() + 1 }));
     }
-  }, [text, attachments, dispatch, obDone, userGoal, userAudience, userLevel, userBudget, catalog, createNewSession, saveMessageToDb]);
+  }, [text, attachments, attachmentFiles, dispatch, obDone, userGoal, userAudience, userLevel, userBudget, catalog, createNewSession, saveMessageToDb]);
 
   return (
     <div className="bg-white border-t border-black/[0.08] flex-shrink-0">

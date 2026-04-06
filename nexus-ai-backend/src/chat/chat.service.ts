@@ -6,6 +6,7 @@ import { ChatContextDto } from './dto/chat-message.dto';
 import { ChatSession, ChatSessionDocument } from './schemas/chat-session.schema';
 import { ChatMessage, ChatMessageDocument } from './schemas/chat-message.schema';
 import { CreateChatSessionDto, UpdateChatSessionDto, SaveChatMessageDto } from './dto/chat-session.dto';
+import type { MulterDiskFile } from '../common/types/multer-disk-file';
 
 type Model = (typeof MODELS)[number];
 
@@ -141,7 +142,7 @@ export class ChatService {
   // AI Response & Recommendations
   // ────────────────────────────────────────────────────────────────────
 
-  reply(message: string, context?: ChatContextDto, files?: Express.Multer.File[]): ReplyResult {
+  reply(message: string, context?: ChatContextDto, files?: MulterDiskFile[]): ReplyResult {
     const msg = message.toLowerCase();
     let candidates = [...MODELS];
 

@@ -2,6 +2,7 @@ import { Body, Controller, Post, Get, Put, Delete, Param, UseInterceptors, Uploa
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiOperation, ApiTags, ApiParam, ApiConsumes } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
+import type { MulterDiskFile } from '../common/types/multer-disk-file';
 import { ChatMessageDto } from './dto/chat-message.dto';
 import { CreateChatSessionDto, UpdateChatSessionDto, SaveChatMessageDto } from './dto/chat-session.dto';
 
@@ -148,7 +149,7 @@ export class ChatController {
   })
   sendMessage(
     @Body() dto: ChatMessageDto,
-    @UploadedFiles() files?: Express.Multer.File[],
+    @UploadedFiles() files?: MulterDiskFile[],
   ) {
     return this.chatService.reply(dto.message, dto.context, files);
   }

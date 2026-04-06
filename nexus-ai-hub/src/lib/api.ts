@@ -1,22 +1,33 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
 interface BackendResponse<T> {
   success: boolean;
-  message: string;
+  message: string | string[];
   data: T;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const isFormData =
+    typeof FormData !== 'undefined' && init?.body instanceof FormData;
+  const { headers: initHeaders, ...restInit } = init ?? {};
+  const headers = new Headers(initHeaders);
+  if (isFormData) {
+    headers.delete('Content-Type');
+  } else if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-    ...init,
+    ...restInit,
+    headers,
   });
 
   const body = (await res.json()) as BackendResponse<T>;
 
   if (!res.ok || !body.success) {
-    throw new Error(body.message || `Request failed (${res.status})`);
+    const msg = body.message;
+    const text = Array.isArray(msg) ? msg.join(', ') : (msg ?? `Request failed (${res.status})`);
+    throw new Error(text);
   }
 
   return body.data;

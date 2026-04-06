@@ -73,13 +73,14 @@ export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
                 guestMode: true,
               }));
             })
-            .catch(() => {
-              console.error('Failed to create guest session');
+            .catch((err) => {
+              console.error('Failed to create guest session', err);
               dispatch(setSession(null));
             });
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('Session check failed, trying guest:', err);
         // If session check fails, try guest mode
         apiGuest()
           .then((guestUser) => {
@@ -92,8 +93,8 @@ export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
               guestMode: true,
             }));
           })
-          .catch(() => {
-            console.error('Failed to create guest session');
+          .catch((err) => {
+            console.error('Failed to create guest session', err);
             dispatch(setSession(null));
           });
       });
