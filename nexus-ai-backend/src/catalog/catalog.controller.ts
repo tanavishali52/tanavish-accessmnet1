@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 
@@ -33,5 +33,12 @@ export class CatalogController {
   @ApiOkResponse({ description: 'List of research items from frontend data' })
   getResearch() {
     return this.catalogService.getResearch();
+  }
+
+  @Get('research/:id')
+  @ApiOperation({ summary: 'Get research article detail' })
+  @ApiOkResponse({ description: 'Full research entry including overview and findings' })
+  getResearchById(@Param('id') id: string) {
+    return this.catalogService.getResearchById(id);
   }
 }

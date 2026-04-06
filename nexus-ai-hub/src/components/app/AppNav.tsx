@@ -40,7 +40,11 @@ export default function AppNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   
   const TABS = getTabs(t);
-  const pathTab = TABS.find((tab) => pathname === TAB_ROUTES[tab.id])?.id;
+  const pathTab = TABS.find((tab) => {
+    if (tab.id === 'research' && pathname?.startsWith('/research')) return true;
+    if (tab.id === 'chat' && (pathname === '/chat' || pathname === '/chathub')) return true;
+    return pathname === TAB_ROUTES[tab.id];
+  })?.id;
   const selectedTab = pathTab ?? activeTab;
 
   const handleLogout = async () => {

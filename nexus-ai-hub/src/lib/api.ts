@@ -119,10 +119,24 @@ export interface AgentTemplate {
 }
 
 export interface ResearchItem {
+  id: string;
   date: string;
   org: string;
   title: string;
   summary: string;
+}
+
+export interface ResearchDetail extends ResearchItem {
+  category: string;
+  longDate: string;
+  authorsLine: string;
+  overview: string;
+  metrics: { value: string; label: string }[];
+  keyFindings: string[];
+  modelsReferenced: { icon: string; name: string }[];
+  impact: string;
+  citation: string;
+  arxivId?: string;
 }
 
 export function apiModels() {
@@ -139,6 +153,10 @@ export function apiLabs() {
 
 export function apiResearch() {
   return request<ResearchItem[]>('/catalog/research');
+}
+
+export function apiResearchDetail(id: string) {
+  return request<ResearchDetail>(`/catalog/research/${encodeURIComponent(id)}`);
 }
 
 // ── Agents ────────────────────────────────────────────────────────────────
