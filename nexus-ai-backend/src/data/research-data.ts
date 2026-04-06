@@ -41,10 +41,10 @@ export const RESEARCH: ResearchEntry[] = [
       'Multimodal reasoning (charts + text) improves versus 2.0-series Gemini without sacrificing text-only scores.',
     ],
     modelsReferenced: [
-      { icon: '🔬', name: 'Gemini 2.5 Pro' },
-      { icon: '🧠', name: 'GPT-5' },
-      { icon: '👑', name: 'Claude Opus 4.6' },
-      { icon: '⚙️', name: 'o3' },
+      { icon: 'FiActivity', name: 'Gemini 2.5 Pro' },
+      { icon: 'FiCpu', name: 'GPT-5' },
+      { icon: 'FiAward', name: 'Claude Opus 4.6' },
+      { icon: 'FiSettings', name: 'o3' },
     ],
     impact:
       'High — sets a new benchmark baseline for frontier model evaluations on reasoning-heavy workloads.',
@@ -76,9 +76,9 @@ export const RESEARCH: ResearchEntry[] = [
       'Calibration on vision QA degrades unless contrastive objectives are reweighted during scaling.',
     ],
     modelsReferenced: [
-      { icon: '🔬', name: 'Gemini 3 Flash' },
-      { icon: '🦙', name: 'Llama 4 Maverick' },
-      { icon: '🧠', name: 'GPT-5.4' },
+      { icon: 'FiActivity', name: 'Gemini 3 Flash' },
+      { icon: 'FiPackage', name: 'Llama 4 Maverick' },
+      { icon: 'FiCpu', name: 'GPT-5.4' },
     ],
     impact: 'Medium-high — informs how labs allocate multimodal training budgets.',
     citation:
@@ -108,8 +108,8 @@ export const RESEARCH: ResearchEntry[] = [
       'Transparency reports correlate stage-wise with measured harm metrics.',
     ],
     modelsReferenced: [
-      { icon: '👑', name: 'Claude Opus 4.6' },
-      { icon: '⚡', name: 'Claude Sonnet 4.6' },
+      { icon: 'FiAward', name: 'Claude Opus 4.6' },
+      { icon: 'FiZap', name: 'Claude Sonnet 4.6' },
     ],
     impact: 'High — practical template for scalable alignment iterations.',
     citation:
@@ -139,9 +139,9 @@ export const RESEARCH: ResearchEntry[] = [
       'Latency targets are met via sparse activation on consumer GPUs.',
     ],
     modelsReferenced: [
-      { icon: '🦙', name: 'Llama 4 Scout' },
-      { icon: '🌟', name: 'Llama 4 Maverick' },
-      { icon: '🔬', name: 'Gemini 3.1 Pro' },
+      { icon: 'FiPackage', name: 'Llama 4 Scout' },
+      { icon: 'FiStar', name: 'Llama 4 Maverick' },
+      { icon: 'FiActivity', name: 'Gemini 3.1 Pro' },
     ],
     impact: 'High — strengthens the open multimodal ecosystem.',
     citation: 'Meta GenAI (2026). Llama 4 Scout & Maverick Technical Overview. Meta AI Research.',
@@ -170,9 +170,9 @@ export const RESEARCH: ResearchEntry[] = [
       'Hybrid retrieval recovers more F1 than raw context beyond 300K tokens.',
     ],
     modelsReferenced: [
-      { icon: '🧠', name: 'GPT-5.4' },
-      { icon: '👑', name: 'Claude Opus 4.6' },
-      { icon: '🔬', name: 'Gemini 3.1 Pro' },
+      { icon: 'FiCpu', name: 'GPT-5.4' },
+      { icon: 'FiAward', name: 'Claude Opus 4.6' },
+      { icon: 'FiActivity', name: 'Gemini 3.1 Pro' },
     ],
     impact: 'Medium — guides enterprise architecture for long documents.',
     citation:
@@ -202,8 +202,8 @@ export const RESEARCH: ResearchEntry[] = [
       'Safety tooling integrates similarly to other open reasoning stacks.',
     ],
     modelsReferenced: [
-      { icon: '🔬', name: 'DeepSeek-R1' },
-      { icon: '💻', name: 'DeepSeek-V3' },
+      { icon: 'FiSearch', name: 'DeepSeek-R1' },
+      { icon: 'FiMonitor', name: 'DeepSeek-V3' },
     ],
     impact: 'High — democratizes access to strong reasoning baselines.',
     citation: 'DeepSeek-AI (2026). DeepSeek-R1 Open Release Notes. deepseek.com.',
@@ -231,7 +231,7 @@ export const RESEARCH: ResearchEntry[] = [
       'Tool-use reliability up on brittle enterprise APIs when schemas are pinned.',
       'Human review checkpoints still recommended for regulated outputs.',
     ],
-    modelsReferenced: [{ icon: '🧠', name: 'GPT-5.4' }],
+    modelsReferenced: [{ icon: 'FiCpu', name: 'GPT-5.4' }],
     impact: 'High — shapes enterprise procurement baselines for 2026.',
     citation: 'OpenAI (2026). GPT-5.4 Enterprise Evaluation Summary. OpenAI Systems.',
   },
@@ -258,8 +258,8 @@ export const RESEARCH: ResearchEntry[] = [
       'Pairing with static analysis boosts merge readiness scores.',
     ],
     modelsReferenced: [
-      { icon: '🌀', name: 'Devstral 2' },
-      { icon: '⚙️', name: 'Mistral Medium 3.1' },
+      { icon: 'FiRefreshCw', name: 'Devstral 2' },
+      { icon: 'FiSettings', name: 'Mistral Medium 3.1' },
     ],
     impact: 'Medium-high — flagship open option for agentic coding stacks.',
     citation: 'Mistral AI (2026). Devstral 2 Technical Report. mistral.ai.',

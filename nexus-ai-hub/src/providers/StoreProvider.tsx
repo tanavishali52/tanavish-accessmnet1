@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { store } from '@/store';
 import { useEffect } from 'react';
 import { setSession, AuthUser } from '@/store/authSlice';
+import CatalogBootstrap from '@/providers/CatalogBootstrap';
 
 export default function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -19,5 +20,10 @@ export default function StoreProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
-  return <Provider store={store}>{children}</Provider>;
+  return (
+    <Provider store={store}>
+      <CatalogBootstrap />
+      {children}
+    </Provider>
+  );
 }

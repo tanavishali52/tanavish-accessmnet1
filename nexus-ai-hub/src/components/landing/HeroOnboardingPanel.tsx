@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import type { HeroOnboardStepDto } from '@/lib/api';
 import { HeroOnboardIcon } from '@/components/landing/heroOnboardingIcons';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
+import { FiSmile, FiStar } from 'react-icons/fi';
 
 type Phase = 'welcome' | 'questions' | 'building';
 
@@ -32,7 +34,9 @@ export default function HeroOnboardingPanel({
   if (phase === 'building') {
     return (
       <div className="px-4 sm:px-6 py-8 text-center border-t border-black/[0.08]">
-        <div className="text-2xl mb-2 animate-pulse">✨</div>
+        <div className="flex justify-center mb-2 text-accent animate-pulse">
+          <FiStar size={28} strokeWidth={2} aria-hidden />
+        </div>
         <div className="font-syne text-[0.95rem] font-bold text-text1 mb-1">Building your personalised query…</div>
         <p className="text-[0.78rem] text-text3">Taking you to Chat Hub right away</p>
       </div>
@@ -43,12 +47,10 @@ export default function HeroOnboardingPanel({
     return (
       <div className="relative overflow-hidden border-t border-accent/15 bg-gradient-to-br from-accent-lt/90 via-white/40 to-transparent">
         <div className="px-4 sm:px-6 pt-4 pb-4">
-          <div className="flex justify-center gap-2 mb-3">
-            <span className="text-lg animate-pulse">✨</span>
-            <span className="text-lg">👋</span>
-            <span className="text-lg animate-pulse" style={{ animationDelay: '0.4s' }}>
-              ✨
-            </span>
+          <div className="flex justify-center items-center gap-2 mb-3 text-accent">
+            <FiStar size={20} className="animate-pulse" strokeWidth={2} aria-hidden />
+            <FiSmile size={20} aria-hidden />
+            <FiStar size={20} className="animate-pulse" style={{ animationDelay: '0.4s' }} strokeWidth={2} aria-hidden />
           </div>
           <h3 className="font-syne text-[1rem] sm:text-[1.08rem] font-bold text-text1 text-center mb-2" style={{ letterSpacing: '-0.02em' }}>
             Welcome! You&apos;re in the right place.
@@ -59,15 +61,17 @@ export default function HeroOnboardingPanel({
           </p>
           <div className="flex flex-col gap-2 mb-4 max-w-md mx-auto">
             {[
-              { icon: '🧩', text: "No tech knowledge needed — we'll explain everything in plain language" },
-              { icon: '💬', text: "Just answer a few simple questions about what you'd like to do" },
-              { icon: '🚀', text: "We'll build your first AI request together — step by step" },
+              { icon: 'FiGrid', text: "No tech knowledge needed — we'll explain everything in plain language" },
+              { icon: 'FiMessageCircle', text: "Just answer a few simple questions about what you'd like to do" },
+              { icon: 'FiTrendingUp', text: "We'll build your first AI request together — step by step" },
             ].map((row) => (
               <div
                 key={row.text}
                 className="flex items-start gap-2.5 bg-white/85 border border-black/[0.08] rounded-xl px-3 py-2.5 text-left"
               >
-                <span className="text-base flex-shrink-0">{row.icon}</span>
+                <span className="flex-shrink-0 text-accent pt-0.5">
+                  <CatalogIcon name={row.icon} size={18} className="text-accent" />
+                </span>
                 <span className="text-[0.74rem] sm:text-[0.78rem] text-text2 leading-snug">{row.text}</span>
               </div>
             ))}
@@ -89,7 +93,7 @@ export default function HeroOnboardingPanel({
               onClick={onStartQuestions}
               className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[0.85rem] font-semibold text-white border-none cursor-pointer font-instrument bg-gradient-to-r from-accent to-accent2 shadow-md hover:opacity-95 transition-opacity"
             >
-              <span>✨</span> Let&apos;s get started
+              <FiStar size={16} strokeWidth={2.5} className="shrink-0" aria-hidden /> Let&apos;s get started
             </button>
             <button
               type="button"

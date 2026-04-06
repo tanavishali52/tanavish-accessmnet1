@@ -28,6 +28,13 @@ export class CatalogController {
     return this.catalogService.getAgents();
   }
 
+  @Get('agent-explore')
+  @ApiOperation({ summary: 'Get agent hub explore tabs, prompts, and use-case apps' })
+  @ApiOkResponse({ description: 'Structured content for the Agents page discover experience' })
+  getAgentExplore() {
+    return this.catalogService.getAgentExplore();
+  }
+
   @Get('hero-onboarding')
   @ApiOperation({ summary: 'Get landing hero guided onboarding steps' })
   @ApiOkResponse({ description: 'Ordered questions and options for the home hero setup flow' })

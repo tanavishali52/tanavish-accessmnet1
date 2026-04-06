@@ -8,6 +8,8 @@ import { FiExternalLink, FiZap, FiTrendingUp, FiBook, FiCode } from 'react-icons
 import { motion } from 'framer-motion';
 import type { Model } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
+import { ChatActiveModelPanelSkeleton } from '@/components/shared/catalogSkeletons';
 
 const getQuickActions = (t: any) => [
   { label: t('chat.right_panel.actions.marketplace'), tab: 'marketplace' as const },
@@ -16,18 +18,20 @@ const getQuickActions = (t: any) => [
 ];
 
 const getRefineItems = (t: any) => [
-  { icon: '⚡', text: t('chat.right_panel.refine.faster_cheaper') },
-  { icon: '🎯', text: t('chat.right_panel.refine.accuracy_quality') },
-  { icon: '🔗', text: t('chat.right_panel.refine.api_integration') },
-  { icon: '📈', text: t('chat.right_panel.refine.scale_production') },
+  { icon: 'FiZap', text: t('chat.right_panel.refine.faster_cheaper') },
+  { icon: 'FiTarget', text: t('chat.right_panel.refine.accuracy_quality') },
+  { icon: 'FiLink', text: t('chat.right_panel.refine.api_integration') },
+  { icon: 'FiTrendingUp', text: t('chat.right_panel.refine.scale_production') },
 ];
 
 export default function ChatRightPanel() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { currentModelId } = useSelector((s: RootState) => s.chat);
-  const { items: catalog } = useSelector((s: RootState) => s.models);
+  const { items: catalog, status: catalogStatus } = useSelector((s: RootState) => s.models);
   const currentModel = catalog.find((m) => m.id === currentModelId);
+  const catalogPending =
+    catalogStatus === 'loading' || (catalogStatus === 'idle' && catalog.length === 0);
 
   const QUICK_ACTIONS = getQuickActions(t);
   const REFINE_ITEMS = getRefineItems(t);
@@ -35,6 +39,7 @@ export default function ChatRightPanel() {
   return (
     <div className="w-[272px] flex-shrink-0 bg-white border-l border-black/[0.08] overflow-y-auto flex flex-col">
       {/* Active model */}
+      {currentModelId && catalogPending && !currentModel && <ChatActiveModelPanelSkeleton />}
       {currentModel && (
         <div className="p-4 border-b border-black/[0.08]">
           <div className="text-[0.68rem] text-text3 font-semibold uppercase tracking-[0.08em] mb-3">
@@ -43,19 +48,19 @@ export default function ChatRightPanel() {
           <div className="bg-bg border border-black/[0.14] rounded-sm p-3.5" style={{ borderRadius: 12 }}>
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-[8px] flex items-center justify-center text-base flex-shrink-0" style={{ background: currentModel.bg }}>
-                {currentModel.icon}
+                <CatalogIcon name={currentModel.icon} size={18} />
               </div>
               <div>
                 <h4 className="text-[0.875rem] font-semibold font-syne text-text1">{currentModel.name}</h4>
                 <small className="text-[0.7rem] text-text3">{currentModel.org}</small>
               </div>
             </div>
-            <p className="text-[0.75rem] text-text2 leading-relaxed mb-3">{currentModel.desc.slice(0, 100)}...</p>
+            <p className="text-[0.75rem] text-text2 leading-relaxed mb-3">{(currentModel.desc ?? '').slice(0, 100)}...</p>
             <div className="grid grid-cols-3 gap-1.5 mb-3">
               {[
                 { label: t('chat.right_panel.rating'), value: `${currentModel.rating}⭐` },
                 { label: t('chat.right_panel.reviews'), value: `${(currentModel.reviews / 1000).toFixed(1)}k` },
-                { label: t('chat.right_panel.price'), value: currentModel.price.split('/')[0] },
+                { label: t('chat.right_panel.price'), value: (currentModel.price ?? '').split('/')[0] || '—' },
               ].map((s) => (
                 <div key={s.label} className="bg-white border border-black/[0.08] rounded text-center p-1.5">
                   <strong className="block text-[0.85rem] font-semibold text-text1">{s.value}</strong>
@@ -111,7 +116,7 @@ export default function ChatRightPanel() {
             className="flex items-center gap-2 px-3 py-2.5 border border-black/[0.08] rounded-sm cursor-pointer text-[0.8rem] text-text2 transition-all mb-1.5"
             style={{ borderRadius: 8 }}
           >
-            <span className="text-[0.9rem]">{item.icon}</span>
+            <CatalogIcon name={item.icon} size={16} className="text-text2" />
             {item.text}
           </motion.div>
         ))}

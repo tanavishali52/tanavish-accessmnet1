@@ -12,35 +12,14 @@ import {
 import { openModal } from '@/store/modalSlice';
 import { openApp, showToast } from '@/store/appSlice';
 import ModelCard from '@/components/shared/ModelCard';
-import Skeleton from '@/components/shared/Skeleton';
-import { FiSearch, FiMic, FiPaperclip, FiFilter, FiX } from 'react-icons/fi';
+import { ModelCardSkeleton } from '@/components/shared/catalogSkeletons';
+import { FiSearch, FiMic, FiPaperclip, FiFilter, FiX, FiLayers, FiStar } from 'react-icons/fi';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
 
 interface TypeFilter {
   id: string;
   label: string;
   translationKey?: string;
-}
-
-function ModelCardSkeleton() {
-  return (
-    <div className="bg-white border border-black/[0.08] p-4 sm:p-6 shadow-card h-[160px] sm:h-[180px] flex flex-col" style={{ borderRadius: 20 }}>
-      <div className="flex items-center gap-3 mb-4">
-        <Skeleton width={44} height={44} borderRadius={11} />
-        <div className="flex-1 space-y-2">
-          <Skeleton width="60%" height="0.9rem" />
-          <Skeleton width="30%" height="0.7rem" />
-        </div>
-      </div>
-      <div className="space-y-2 flex-1">
-        <Skeleton width="100%" height="0.75rem" />
-        <Skeleton width="90%" height="0.75rem" />
-      </div>
-      <div className="pt-4 border-t border-black/[0.08] flex justify-between items-center mt-3">
-        <Skeleton width={80} height="0.75rem" />
-        <Skeleton width={40} height="0.75rem" />
-      </div>
-    </div>
-  );
 }
 
 export default function MarketplaceView() {
@@ -61,10 +40,13 @@ export default function MarketplaceView() {
 
   const catalog = items;
 
+  const catalogPending = status === 'loading' || (status === 'idle' && items.length === 0);
+
   const filtered = useMemo(() => catalog.filter((m) => {
     const q = searchQuery.toLowerCase();
-    const matchSearch = !q || m.name.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q) || m.org.toLowerCase().includes(q);
-    const matchType   = activeFilter === 'all' || m.types.includes(activeFilter);
+    const types = m.types ?? [];
+    const matchSearch = !q || m.name.toLowerCase().includes(q) || (m.desc ?? '').toLowerCase().includes(q) || m.org.toLowerCase().includes(q);
+    const matchType   = activeFilter === 'all' || types.includes(activeFilter);
     const matchLab    = activeLab === 'all' || m.lab === activeLab;
     const matchPrice  = m.price_start <= priceRange;
     const matchRating = minRating === 'any' || (minRating === '4+' && m.rating >= 4) || (minRating === '4.5+' && m.rating >= 4.5);
@@ -171,8 +153,8 @@ export default function MarketplaceView() {
 
       {/* ── AI Labs Bar ── */}
       <div className="flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 bg-white border-b border-black/[0.08] overflow-x-auto flex-shrink-0 scrollbar-none">
-        <span className="text-[0.62rem] sm:text-[0.67rem] font-bold uppercase tracking-[0.09em] text-text3 whitespace-nowrap flex-shrink-0 pr-1">
-          🏛 Labs
+        <span className="inline-flex items-center gap-1 text-[0.62rem] sm:text-[0.67rem] font-bold uppercase tracking-[0.09em] text-text3 whitespace-nowrap flex-shrink-0 pr-1">
+          <FiLayers size={12} className="text-text3" aria-hidden /> Labs
         </span>
         <button onClick={() => dispatch(clearLabFilter())}
           className={`inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1 sm:py-1.5 border-[1.5px] rounded-full text-[0.72rem] sm:text-[0.78rem] font-semibold cursor-pointer whitespace-nowrap flex-shrink-0 transition-all font-instrument ${activeLab === 'all' ? 'bg-accent border-accent text-white' : 'bg-bg border-black/[0.14] text-text2 hover:bg-accent-lt hover:border-accent hover:text-accent'}`}>
@@ -181,7 +163,7 @@ export default function MarketplaceView() {
         {labs.map((lab) => (
           <button key={lab.id} onClick={() => dispatch(setActiveLab(lab.id))}
             className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 border-[1.5px] rounded-full text-[0.72rem] sm:text-[0.78rem] font-semibold cursor-pointer whitespace-nowrap flex-shrink-0 transition-all font-instrument ${activeLab === lab.id ? 'bg-accent border-accent text-white shadow-[0_3px_12px_rgba(200,98,42,0.28)]' : 'bg-bg border-black/[0.14] text-text2 hover:bg-accent-lt hover:border-accent hover:text-accent'}`}>
-            <span className="text-sm sm:text-base">{lab.icon}</span>
+            <CatalogIcon name={lab.icon} size={18} className={activeLab === lab.id ? 'text-white' : 'text-text1'} />
             <span className="hidden sm:inline">{lab.name}</span>
             <span className="sm:hidden">{lab.name.split(' ')[0]}</span>
           </button>
@@ -193,7 +175,7 @@ export default function MarketplaceView() {
         {activeLab !== 'all' && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             className="flex items-center gap-2 px-3 sm:px-5 py-2 bg-gradient-to-r from-accent-lt to-white/0 border-b border-accent/25 text-[0.78rem] sm:text-[0.8rem] text-accent font-medium flex-shrink-0">
-            <span>{labs.find((l) => l.id === activeLab)?.icon}</span>
+            <CatalogIcon name={labs.find((l) => l.id === activeLab)?.icon ?? 'FiCpu'} size={18} className="text-accent shrink-0" />
             <span>Showing <strong>{activeLab}</strong> models</span>
             <button onClick={() => dispatch(clearLabFilter())}
               className="ml-auto text-[0.72rem] text-accent2 bg-none border border-accent/25 rounded-full px-2.5 py-0.5 cursor-pointer hover:bg-accent hover:text-white transition-all font-instrument flex items-center gap-1">
@@ -211,7 +193,9 @@ export default function MarketplaceView() {
           <div onClick={() => dispatch(openApp('chat'))}
             className="bg-accent-lt border border-accent/25 rounded-sm p-3 mb-3 cursor-pointer hover:bg-accent hover:text-white transition-all group"
             style={{ borderRadius: 12 }}>
-            <div className="text-[0.75rem] font-semibold text-accent group-hover:text-white mb-0.5">✦ Need help choosing?</div>
+            <div className="text-[0.75rem] font-semibold text-accent group-hover:text-white mb-0.5 inline-flex items-center gap-1">
+              <FiStar size={13} className="shrink-0" aria-hidden /> Need help choosing?
+            </div>
             <div className="text-[0.68rem] text-text2 group-hover:text-white/80 leading-snug">Chat with our AI guide for personalised picks.</div>
           </div>
           {/* Price */}
@@ -239,9 +223,9 @@ export default function MarketplaceView() {
             <div className="text-[0.68rem] font-semibold text-text3 uppercase tracking-[0.06em] mb-1.5">Quick Guides</div>
             <div className="flex flex-col gap-1">
               {[
-                { label: '📐 Prompt tips', tab: 'prompt' as const },
-                { label: '🤖 Agent guide', tab: 'agent' as const },
-                { label: '💰 Pricing',     tab: 'pricing' as const },
+                { label: 'Prompt tips', tab: 'prompt' as const },
+                { label: 'Agent guide', tab: 'agent' as const },
+                { label: 'Pricing',     tab: 'pricing' as const },
               ].map((g) => (
                 <button key={g.label}
                   onClick={() => { const m = items[0]; if (m) dispatch(openModal({ model: m, tab: g.tab })); }}
@@ -260,16 +244,23 @@ export default function MarketplaceView() {
         >
           {/* Result count */}
           <div className="col-span-full text-[0.75rem] text-text3 pb-1">
-            {filtered.length} model{filtered.length !== 1 ? 's' : ''} found
+            {catalogPending ? '…' : `${filtered.length} model${filtered.length !== 1 ? 's' : ''} found`}
           </div>
 
-          {status === 'loading' ? (
+          {catalogPending ? (
             Array.from({ length: 9 }).map((_, i) => (
               <ModelCardSkeleton key={i} />
             ))
+          ) : status === 'error' ? (
+            <div className="col-span-full text-center py-16 text-text3 px-4">
+              <div className="text-base font-medium text-text1">Could not load the catalog</div>
+              <div className="text-sm mt-1">Check your connection and refresh the page.</div>
+            </div>
           ) : filtered.length === 0 ? (
             <div className="col-span-full text-center py-16 text-text3">
-              <div className="text-4xl mb-3">🔍</div>
+              <div className="flex justify-center mb-3 opacity-50">
+                <FiSearch size={44} strokeWidth={1.5} aria-hidden />
+              </div>
               <div className="text-base font-medium">No models found</div>
               <div className="text-sm mt-1">Try adjusting your filters</div>
             </div>

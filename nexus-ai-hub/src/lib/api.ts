@@ -148,6 +148,43 @@ export function apiAgents() {
   return request<AgentTemplate[]>('/catalog/agents');
 }
 
+export type AgentExploreTabId =
+  | 'use_cases'
+  | 'build_business'
+  | 'learn'
+  | 'monitor'
+  | 'research'
+  | 'create'
+  | 'analyze';
+
+export interface AgentExploreTabDto {
+  id: AgentExploreTabId;
+  label: string;
+}
+
+export interface AgentExploreSuggestionDto {
+  icon: string;
+  text: string;
+}
+
+export interface AgentUseCaseAppDto {
+  name: string;
+  /** react-icons name, e.g. `FiZap` — resolved via CatalogIcon. */
+  icon: string;
+  type: string;
+  desc: string;
+}
+
+export interface AgentExplorePayload {
+  tabs: AgentExploreTabDto[];
+  suggestions: Record<AgentExploreTabId, AgentExploreSuggestionDto[]>;
+  useCaseApps: Record<AgentExploreTabId, AgentUseCaseAppDto[]>;
+}
+
+export function apiAgentExplore() {
+  return request<AgentExplorePayload>('/catalog/agent-explore');
+}
+
 export function apiLabs() {
   return request<Lab[]>('/catalog/labs');
 }
@@ -156,7 +193,7 @@ export interface HeroOnboardStepDto {
   k: string;
   q: string;
   hint: string;
-  /** react-icons/fi name, e.g. `FiZap` — resolved in the hub via `HERO_ONBOARD_ICONS`. */
+  /** react-icons name, e.g. `FiZap` — resolved in the hub via CatalogIcon. */
   opts: { icon: string; l: string; sub: string }[];
 }
 
@@ -181,6 +218,8 @@ export interface AgentRecord {
   modelId: string;
   systemPrompt: string;
   tools: string[];
+  /** none | short_term | short_and_long_term */
+  memoryMode?: string;
   status: 'draft' | 'active' | 'paused';
   createdAt: string;
   updatedAt: string;
@@ -202,6 +241,7 @@ export function apiCreateAgent(payload: {
   modelId: string;
   systemPrompt?: string;
   tools?: string[];
+  memoryMode?: string;
   status?: string;
 }) {
   return request<AgentRecord>('/agents', {
@@ -220,6 +260,7 @@ export function apiUpdateAgent(id: string, payload: Partial<{
   modelId: string;
   systemPrompt: string;
   tools: string[];
+  memoryMode: string;
   status: string;
 }>) {
   return request<AgentRecord>(`/agents/${id}`, {

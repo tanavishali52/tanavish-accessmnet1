@@ -35,7 +35,9 @@ export default function AppNav() {
   const router = useRouter();
   const pathname = usePathname();
   const activeTab = useSelector((s: RootState) => s.app.activeTab);
-  const { items: models } = useSelector((s: RootState) => s.models);
+  const { items: models, status: modelsStatus } = useSelector((s: RootState) => s.models);
+  const catalogPending =
+    modelsStatus === 'loading' || (modelsStatus === 'idle' && models.length === 0);
   const { isAuthenticated, user } = useSelector((s: RootState) => s.auth);
   const [mobileOpen, setMobileOpen] = useState(false);
   
@@ -117,13 +119,19 @@ export default function AppNav() {
               {t('common.sign_in')}
             </button>
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: catalogPending ? 1 : 1.02 }}
+              whileTap={{ scale: catalogPending ? 1 : 0.97 }}
               onClick={() => {
+                if (catalogPending) return;
                 const m = models.find((m) => m.id === 'gpt5') || models[0];
                 if (m) dispatch(openModal({ model: m }));
               }}
-              className="bg-accent text-white text-[0.82rem] font-medium px-4 py-2 rounded-full hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
+              disabled={catalogPending}
+              className={`text-[0.82rem] font-medium px-4 py-2 rounded-full border-none font-instrument transition-colors ${
+                catalogPending
+                  ? 'bg-black/[0.12] text-text3 cursor-wait'
+                  : 'bg-accent text-white hover:bg-accent2 cursor-pointer'
+              }`}
             >
               {t('common.get_started')}
             </motion.button>
@@ -185,8 +193,18 @@ export default function AppNav() {
                     {t('common.sign_in')}
                   </button>
                   <button
-                    onClick={() => { const m = models.find((m) => m.id === 'gpt5') || models[0]; if (m) dispatch(openModal({ model: m })); setMobileOpen(false); }}
-                    className="flex-1 bg-accent text-white text-[0.82rem] font-medium rounded-full py-2 hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
+                    onClick={() => {
+                      if (catalogPending) return;
+                      const m = models.find((m) => m.id === 'gpt5') || models[0];
+                      if (m) dispatch(openModal({ model: m }));
+                      setMobileOpen(false);
+                    }}
+                    disabled={catalogPending}
+                    className={`flex-1 text-[0.82rem] font-medium rounded-full py-2 border-none font-instrument ${
+                      catalogPending
+                        ? 'bg-black/[0.12] text-text3 cursor-wait'
+                        : 'bg-accent text-white hover:bg-accent2 cursor-pointer'
+                    }`}
                   >
                     {t('common.get_started')}
                   </button>

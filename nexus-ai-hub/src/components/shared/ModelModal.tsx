@@ -5,9 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { closeModal, setModalTab, ModalTab } from '@/store/modalSlice';
 import { openApp } from '@/store/appSlice';
-import { setCurrentModelId } from '@/store/chatSlice';
-import { FiX, FiZap, FiCopy, FiCpu, FiGlobe, FiSearch, FiFileText, FiCheck } from 'react-icons/fi';
-import { useState } from 'react';
+import { setCurrentModelId, addMessage, setOnboardPhase, setObDone } from '@/store/chatSlice';
+import { FiX, FiZap, FiCopy, FiStar, FiArrowRight, FiCheck, FiMessageCircle, FiDollarSign } from 'react-icons/fi';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 const TABS: { id: ModalTab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -16,13 +18,11 @@ const TABS: { id: ModalTab; label: string }[] = [
   { id: 'prompt',   label: 'Prompt Guide' },
   { id: 'agent',    label: 'Agents' },
   { id: 'reviews',  label: 'Reviews' },
-  { id: 'create-agent', label: 'Create Agent' },
 ];
 
 export default function ModelModal() {
   const dispatch = useDispatch();
   const { isOpen, activeModel, activeTab } = useSelector((s: RootState) => s.modal);
-  const models = useSelector((s: RootState) => s.models.items);
   if (!activeModel) return null;
 
   const handleTryNow = () => {
@@ -58,28 +58,26 @@ export default function ModelModal() {
             {/* Header */}
             <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-black/[0.08] flex items-start gap-3 flex-shrink-0">
               <div
-                className="w-11 h-11 sm:w-14 sm:h-14 rounded-[12px] sm:rounded-[14px] flex items-center justify-center text-xl sm:text-2xl flex-shrink-0"
+                className="w-11 h-11 sm:w-14 sm:h-14 rounded-[12px] sm:rounded-[14px] flex items-center justify-center flex-shrink-0 text-text1"
                 style={{ background: activeModel.bg }}
               >
-                {activeModel.icon}
+                <CatalogIcon name={activeModel.icon} size={30} className="text-text1" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-syne text-[1.1rem] sm:text-[1.4rem] font-bold text-text1 leading-tight" style={{ letterSpacing: '-0.03em' }}>
-                  {activeTab === 'create-agent' ? 'Configure New Agent' : activeModel.name}
+                  {activeModel.name}
                 </h2>
                 <p className="text-[0.75rem] sm:text-[0.82rem] text-text2 truncate">
-                  {activeTab === 'create-agent' ? `Developing an agent using ${activeModel.name}` : `by ${activeModel.org} · ${activeModel.tags[0]}`}
+                  {`by ${activeModel.org} · ${activeModel.tags?.[0] ?? 'Model'}`}
                 </p>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                {activeTab !== 'create-agent' && (
-                  <button
-                    onClick={handleTryNow}
-                    className="flex items-center gap-1 sm:gap-1.5 bg-accent text-white text-[0.75rem] sm:text-[0.82rem] font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
-                  >
-                    <FiZap size={12} /> Try
-                  </button>
-                )}
+                <button
+                  onClick={handleTryNow}
+                  className="flex items-center gap-1 sm:gap-1.5 bg-accent text-white text-[0.75rem] sm:text-[0.82rem] font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument"
+                >
+                  <FiZap size={12} /> Try
+                </button>
                 <button
                   onClick={() => dispatch(closeModal())}
                   className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-bg2 flex items-center justify-center text-text2 hover:bg-bg3 transition-colors border-none cursor-pointer"
@@ -112,7 +110,6 @@ export default function ModelModal() {
               {activeTab === 'prompt'   && <PromptTab />}
               {activeTab === 'agent'    && <AgentTab model={activeModel} />}
               {activeTab === 'reviews'  && <ReviewsTab model={activeModel} />}
-              {activeTab === 'create-agent' && <CreateAgentForm initialModel={activeModel} models={models} />}
             </div>
           </motion.div>
         </motion.div>
@@ -123,175 +120,125 @@ export default function ModelModal() {
 
 /* ── Tab panels ─────────────────────────────────────────────── */
 
-function CreateAgentForm({ initialModel, models }: { initialModel: M; models: M[] }) {
-  const dispatch = useDispatch();
-  const [formData, setFormData] = useState({
-    name: '',
-    role: '',
-    instructions: '',
-    modelId: initialModel.id,
-    tools: {
-      search: true,
-      coder: false,
-      files: true,
-    }
-  });
-
-  const [loading, setLoading] = useState(false);
-
-  const handleCreate = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      dispatch(closeModal());
-      dispatch(openApp('chat'));
-      // Simulate agent message
-      setTimeout(() => {
-        // Here we would normally trigger the chat logic to start with the agent
-      }, 500);
-    }, 1500);
-  };
-
-  return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-6 font-instrument">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">Agent Name</label>
-          <input
-            type="text"
-            placeholder="e.g. Research Analyst"
-            className="w-full px-4 py-3 bg-bg border border-black/[0.1] rounded-xl outline-none focus:border-accent transition-all text-sm font-instrument"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">Primary Goal</label>
-          <input
-            type="text"
-            placeholder="e.g. Track market trends"
-            className="w-full px-4 py-3 bg-bg border border-black/[0.1] rounded-xl outline-none focus:border-accent transition-all text-sm font-instrument"
-            value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">Backbone Model</label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {models.slice(0, 6).map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setFormData({ ...formData, modelId: m.id })}
-              className={`flex items-center gap-2 p-2 border rounded-xl transition-all cursor-pointer text-left font-instrument ${
-                formData.modelId === m.id ? 'border-accent bg-accent-lt' : 'border-black/[0.08] bg-white hover:border-black/[0.15]'
-              }`}
-            >
-              <span className="text-lg">{m.icon}</span>
-              <span className="text-[0.75rem] font-medium truncate">{m.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">System Instructions</label>
-        <textarea
-          rows={4}
-          placeholder="Detailed personality, behavioral constraints, and expertise guidelines..."
-          className="w-full px-4 py-3 bg-bg border border-black/[0.1] rounded-xl outline-none focus:border-accent transition-all text-sm font-instrument resize-none"
-          value={formData.instructions}
-          onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-        />
-      </div>
-
-      <div className="space-y-3">
-        <label className="text-[0.7rem] font-bold uppercase tracking-wider text-text3 ml-1">Agent Capabilities</label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { id: 'search', label: 'Web Search', icon: <FiSearch />, desc: 'Real-time browsing' },
-            { id: 'coder', label: 'Code Interpreter', icon: <FiCpu />, desc: 'Solve math & logic' },
-            { id: 'files', label: 'File Analysis', icon: <FiFileText />, desc: 'Extract data' },
-          ].map((tool) => (
-            <button
-              key={tool.id}
-              onClick={() => setFormData({
-                ...formData,
-                tools: { ...formData.tools, [tool.id]: !formData.tools[tool.id as keyof typeof formData.tools] }
-              })}
-              className={`flex flex-col items-start p-3 border rounded-xl transition-all cursor-pointer font-instrument text-left ${
-                formData.tools[tool.id as keyof typeof formData.tools] ? 'border-accent bg-accent-lt' : 'border-black/[0.08] bg-white hover:border-black/[0.15]'
-              }`}
-            >
-              <div className={`p-1.5 rounded-lg mb-2 ${formData.tools[tool.id as keyof typeof formData.tools] ? 'bg-accent text-white' : 'bg-bg2 text-text3'}`}>
-                {tool.icon}
-              </div>
-              <div className="text-[0.78rem] font-semibold text-text1">{tool.label}</div>
-              <div className="text-[0.62rem] text-text3 leading-tight">{tool.desc}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="pt-2">
-        <button
-          onClick={handleCreate}
-          disabled={loading || !formData.name}
-          className={`w-full py-3.5 rounded-xl text-white font-syne font-bold text-base transition-all flex items-center justify-center gap-2 cursor-pointer border-none ${
-            loading || !formData.name ? 'bg-black/[0.2] cursor-not-allowed' : 'bg-accent hover:bg-accent2 shadow-lg shadow-accent/20'
-          }`}
-        >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <>Deploy Agent <FiCheck /></>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 type M = NonNullable<RootState['modal']['activeModel']>;
 
+const modalCard =
+  'rounded-2xl border border-black/[0.07] bg-white shadow-[0_4px_24px_-6px_rgba(15,23,42,0.08)]';
+
 function OverviewTab({ model }: { model: M }) {
+  const statItems = [
+    {
+      label: 'Rating',
+      value: String(model.rating),
+      sub: 'out of 5',
+      icon: FiStar,
+      iconWrap: 'bg-amber-400/15 text-amber-600',
+    },
+    {
+      label: 'Reviews',
+      value: `${(model.reviews / 1000).toFixed(1)}k`,
+      sub: 'community',
+      icon: FiMessageCircle,
+      iconWrap: 'bg-blue-500/10 text-blue-600',
+    },
+    {
+      label: 'Price',
+      value: model.price.split('/')[0],
+      sub: 'from',
+      icon: FiDollarSign,
+      iconWrap: 'bg-accent/12 text-accent',
+    },
+  ] as const;
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <p className="text-[0.82rem] sm:text-[0.9rem] text-text2 leading-relaxed">{model.desc}</p>
-      {/* Stats — 3 col grid */}
+    <div className="space-y-4 sm:space-y-5">
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`relative overflow-hidden ${modalCard} p-4 sm:p-5`}
+      >
+        <div
+          className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/35 to-transparent"
+          aria-hidden
+        />
+        <p className="text-[0.65rem] sm:text-[0.68rem] font-semibold uppercase tracking-wider text-text3 mb-2 font-instrument">
+          Summary
+        </p>
+        <p className="text-[0.82rem] sm:text-[0.92rem] text-text2 leading-relaxed">{model.desc}</p>
+      </motion.div>
+
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        {[
-          { label: 'Rating',  value: `${model.rating} ⭐` },
-          { label: 'Reviews', value: `${(model.reviews / 1000).toFixed(1)}k` },
-          { label: 'Price',   value: model.price.split('/')[0] },
-        ].map((s) => (
-          <div key={s.label} className="bg-bg rounded-sm p-2.5 sm:p-3 text-center border border-black/[0.08]">
-            <div className="font-semibold text-text1 text-[0.85rem] sm:text-sm">{s.value}</div>
-            <div className="text-[0.62rem] sm:text-[0.68rem] text-text3 mt-0.5">{s.label}</div>
-          </div>
+        {statItems.map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.04 * i }}
+            whileHover={{ y: -2 }}
+            className={`${modalCard} p-3 sm:p-4 text-center flex flex-col items-center`}
+          >
+            <div
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mb-2 ${s.iconWrap}`}
+            >
+              <s.icon size={18} strokeWidth={2} aria-hidden />
+            </div>
+            <div className="font-syne font-bold text-lg sm:text-xl text-text1 leading-none tabular-nums">
+              {s.value}
+            </div>
+            <div className="text-[0.62rem] sm:text-[0.68rem] text-text3 mt-1">{s.sub}</div>
+            <div className="text-[0.65rem] sm:text-[0.72rem] font-medium text-text2 mt-0.5">{s.label}</div>
+          </motion.div>
         ))}
       </div>
-      {/* Tags */}
-      <div>
-        <h4 className="font-syne font-semibold text-[0.82rem] sm:text-sm mb-2 sm:mb-3">Capabilities</h4>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+
+      <div className={`${modalCard} p-4 sm:p-5`}>
+        <h4 className="font-syne font-bold text-[0.85rem] sm:text-sm text-text1 mb-3 sm:mb-4 flex items-center gap-2">
+          <span className="w-1 h-4 rounded-full bg-accent" aria-hidden />
+          Capabilities
+        </h4>
+        <div className="flex flex-wrap gap-2">
           {model.tags.map((tag: string) => (
-            <span key={tag} className="bg-bg2 text-text2 text-[0.68rem] sm:text-xs px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">{tag}</span>
+            <span
+              key={tag}
+              className="inline-flex items-center text-[0.68rem] sm:text-[0.75rem] text-text1 font-medium px-3 py-1.5 rounded-xl border border-black/[0.08] bg-gradient-to-b from-bg to-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+            >
+              {tag}
+            </span>
           ))}
         </div>
       </div>
-      {/* Use cases */}
-      <div className="bg-accent-lt border border-accent/25 rounded-sm p-3 sm:p-4">
-        <h4 className="font-semibold text-[0.82rem] sm:text-sm text-accent mb-2">Example Use Cases</h4>
-        <ul className="space-y-1">
-          {['Content generation & summarisation', 'Code assistance & debugging', 'Data analysis & insights', 'Customer support automation'].map((u) => (
-            <li key={u} className="text-[0.75rem] sm:text-[0.82rem] text-text2 flex items-start gap-2">
-              <span className="text-accent flex-shrink-0 mt-0.5">✓</span> {u}
+
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl border border-accent/20 bg-gradient-to-br from-accent-lt via-white to-[#FAF7FF] p-4 sm:p-5 shadow-[0_8px_32px_-12px_rgba(200,98,42,0.18)]"
+      >
+        <div
+          className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-accent/5 blur-2xl pointer-events-none"
+          aria-hidden
+        />
+        <h4 className="font-syne font-bold text-[0.85rem] sm:text-sm text-accent mb-3 sm:mb-4 relative">
+          Example use cases
+        </h4>
+        <ul className="space-y-2.5 relative">
+          {[
+            'Content generation & summarisation',
+            'Code assistance & debugging',
+            'Data analysis & insights',
+            'Customer support automation',
+          ].map((u) => (
+            <li
+              key={u}
+              className="text-[0.75rem] sm:text-[0.82rem] text-text2 flex items-start gap-2.5 leading-snug"
+            >
+              <span className="mt-0.5 shrink-0 w-5 h-5 rounded-lg bg-accent text-white flex items-center justify-center shadow-sm">
+                <FiCheck size={12} strokeWidth={3} aria-hidden />
+              </span>
+              {u}
             </li>
           ))}
         </ul>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -307,22 +254,51 @@ function GuideTab({ model }: { model: M }) {
   return (
     <div className="space-y-3 sm:space-y-4">
       {steps.map((s) => (
-        <div key={s.n} className="flex gap-2.5 sm:gap-3">
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-accent text-white text-[0.7rem] sm:text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{s.n}</div>
-          <div>
-            <div className="font-semibold text-[0.82rem] sm:text-sm text-text1 mb-0.5">{s.title}</div>
-            <div className="text-[0.75rem] sm:text-[0.82rem] text-text2">{s.desc}</div>
+        <motion.div
+          key={s.n}
+          initial={{ opacity: 0, x: -6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.03 * s.n }}
+          className={`${modalCard} p-3.5 sm:p-4 flex gap-3 sm:gap-4`}
+        >
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-accent to-accent2 text-white text-[0.72rem] sm:text-sm font-bold flex items-center justify-center flex-shrink-0 shadow-md shadow-accent/25">
+            {s.n}
           </div>
-        </div>
+          <div className="min-w-0">
+            <div className="font-syne font-semibold text-[0.84rem] sm:text-sm text-text1 mb-1">{s.title}</div>
+            <div className="text-[0.75rem] sm:text-[0.82rem] text-text2 leading-relaxed">{s.desc}</div>
+          </div>
+        </motion.div>
       ))}
-      <div className="bg-text1 text-white rounded-sm p-3 sm:p-4 font-mono text-[0.68rem] sm:text-xs leading-relaxed mt-2 overflow-x-auto">
-        <div className="text-text3 mb-1"># Quick start</div>
-        <div><span className="text-blue-300">import</span> openai</div>
-        <div className="mt-1">client = openai.OpenAI()</div>
-        <div className="mt-1">response = client.chat.completions.create(</div>
-        <div className="ml-3">model=<span className="text-green-300">&quot;{model.id}&quot;</span>,</div>
-        <div className="ml-3">messages=[&#123;<span className="text-yellow-300">&quot;role&quot;</span>: <span className="text-green-300">&quot;user&quot;</span>, <span className="text-yellow-300">&quot;content&quot;</span>: <span className="text-green-300">&quot;Hello!&quot;</span>&#125;]</div>
-        <div>)</div>
+      <div
+        className={`${modalCard} overflow-hidden mt-1 border-slate-800/90 bg-gradient-to-b from-slate-900 to-slate-950 text-white p-4 sm:p-5 font-mono text-[0.68rem] sm:text-[0.72rem] leading-relaxed shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)]`}
+      >
+        <div className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-white/10">
+          <span className="text-slate-400 font-sans text-[0.62rem] sm:text-[0.65rem] font-semibold uppercase tracking-wide">
+            Quick start
+          </span>
+          <span className="text-slate-500 text-[0.6rem]">Python</span>
+        </div>
+        <div className="text-slate-300 overflow-x-auto">
+          <div>
+            <span className="text-sky-400">import</span> openai
+          </div>
+          <div className="mt-1.5">client = openai.OpenAI()</div>
+          <div className="mt-1.5">response = client.chat.completions.create(</div>
+          <div className="ml-3">
+            model=<span className="text-emerald-400">&quot;{model.id}&quot;</span>,
+          </div>
+          <div className="ml-3">
+            messages=[
+            &#123;
+            <span className="text-amber-300">&quot;role&quot;</span>:{' '}
+            <span className="text-emerald-400">&quot;user&quot;</span>,{' '}
+            <span className="text-amber-300">&quot;content&quot;</span>:{' '}
+            <span className="text-emerald-400">&quot;Hello!&quot;</span>
+            &#125;]
+          </div>
+          <div>)</div>
+        </div>
       </div>
     </div>
   );
@@ -330,28 +306,109 @@ function GuideTab({ model }: { model: M }) {
 
 function PricingTab({ model }: { model: M }) {
   const tiers = [
-    { name: 'Pay-per-use',    price: model.price.split('/')[0], features: ['No commitment', 'Scale instantly', 'Standard limits', 'Community support'] },
-    { name: 'Pro',            price: '$99/mo', features: ['Higher rate limits', 'Priority access', '10% discount', 'Email support'], highlighted: true },
-    { name: 'Enterprise',     price: 'Custom', features: ['Unlimited scale', 'Dedicated infra', 'SLA guarantees', '24/7 support'] },
+    {
+      name: 'Pay-per-use',
+      price: model.price.split('/')[0],
+      blurb: 'Start fast with zero commitment',
+      features: ['No commitment', 'Scale instantly', 'Standard limits', 'Community support'],
+      variant: 'starter' as const,
+    },
+    {
+      name: 'Pro',
+      price: '$99/mo',
+      blurb: 'Best for teams shipping weekly',
+      features: ['Higher rate limits', 'Priority access', '10% discount', 'Email support'],
+      variant: 'featured' as const,
+      badge: 'Most popular',
+    },
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      blurb: 'Security, scale & white-glove support',
+      features: ['Unlimited scale', 'Dedicated infra', 'SLA guarantees', '24/7 support'],
+      variant: 'enterprise' as const,
+    },
   ];
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-      {tiers.map((t) => (
-        <div key={t.name} className={`rounded-sm p-4 sm:p-5 border ${t.highlighted ? 'border-accent bg-accent-lt' : 'border-black/[0.08] bg-bg'}`}>
-          <div className="font-syne font-semibold text-[0.85rem] sm:text-sm mb-1">{t.name}</div>
-          <div className="text-xl sm:text-2xl font-bold text-text1 mb-2 sm:mb-3">{t.price}</div>
-          <ul className="space-y-1 sm:space-y-1.5">
-            {t.features.map((f) => (
-              <li key={f} className="text-[0.72rem] sm:text-[0.78rem] text-text2 flex items-center gap-1.5">
-                <span className="text-teal flex-shrink-0">✓</span> {f}
-              </li>
-            ))}
-          </ul>
-          <button className={`mt-3 sm:mt-4 w-full py-2 rounded-full text-[0.75rem] sm:text-xs font-medium transition-colors cursor-pointer font-instrument ${t.highlighted ? 'bg-accent text-white hover:bg-accent2 border-none' : 'bg-white border border-black/[0.14] text-text2 hover:border-accent hover:text-accent'}`}>
-            {t.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
-          </button>
-        </div>
-      ))}
+    <div className="relative">
+      <p className="text-[0.78rem] sm:text-[0.82rem] text-text2 text-center max-w-lg mx-auto mb-5 sm:mb-6 leading-relaxed">
+        Choose how you bill for <span className="font-semibold text-text1">{model.name}</span> — every tier includes the same model quality.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-0 sm:items-stretch max-w-4xl mx-auto">
+        {tiers.map((t) => {
+          const isFeatured = t.variant === 'featured';
+          const isEnterprise = t.variant === 'enterprise';
+
+          return (
+            <motion.div
+              key={t.name}
+              layout
+              whileHover={{ y: isFeatured ? -4 : -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+              className={[
+                'relative flex flex-col p-4 sm:p-5 rounded-2xl sm:rounded-[1.25rem]',
+                isFeatured
+                  ? 'sm:scale-[1.06] sm:z-[2] border-2 border-accent bg-gradient-to-b from-accent-lt via-white to-[#FDF8F5] shadow-[0_20px_50px_-12px_rgba(200,98,42,0.35)] ring-1 ring-accent/25'
+                  : isEnterprise
+                    ? 'sm:ml-0 border border-black/[0.1] bg-gradient-to-br from-bg via-white to-slate-50/80 shadow-[0_8px_30px_-10px_rgba(0,0,0,0.12)]'
+                    : 'sm:mr-0 border border-dashed border-black/[0.16] bg-bg2/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]',
+              ].join(' ')}
+            >
+              {isFeatured && t.badge && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-accent text-white text-[0.65rem] sm:text-[0.68rem] font-bold uppercase tracking-wide shadow-md whitespace-nowrap font-instrument">
+                  {t.badge}
+                </div>
+              )}
+
+              <div className={`mb-3 ${isFeatured ? 'pt-2' : ''}`}>
+                <div className="flex items-center gap-2 mb-0.5">
+                  {isFeatured && <FiZap size={16} className="text-accent shrink-0" aria-hidden />}
+                  <div className="font-syne font-bold text-[0.9rem] sm:text-[1rem] text-text1">{t.name}</div>
+                </div>
+                <p className="text-[0.68rem] sm:text-[0.72rem] text-text3 leading-snug">{t.blurb}</p>
+              </div>
+
+              <div
+                className={`text-2xl sm:text-[1.65rem] font-bold font-syne mb-3 sm:mb-4 tracking-tight ${
+                  isFeatured ? 'text-accent' : 'text-text1'
+                }`}
+              >
+                {t.price}
+              </div>
+
+              <ul className="space-y-2 flex-1 mb-1">
+                {t.features.map((f) => (
+                  <li key={f} className="text-[0.72rem] sm:text-[0.78rem] text-text2 flex items-start gap-2 leading-snug">
+                    <span
+                      className={`mt-0.5 shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${
+                        isFeatured ? 'bg-accent text-white' : 'bg-teal/15 text-teal'
+                      }`}
+                    >
+                      <FiCheck size={10} strokeWidth={3} aria-hidden />
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                type="button"
+                className={[
+                  'mt-4 w-full py-2.5 rounded-full text-[0.78rem] sm:text-[0.8rem] font-semibold transition-all cursor-pointer font-instrument',
+                  isFeatured
+                    ? 'border-none bg-accent text-white shadow-lg shadow-accent/30 hover:bg-accent2 hover:shadow-accent/40'
+                    : isEnterprise
+                      ? 'border-[1.5px] border-text1/20 bg-white text-text1 hover:border-accent hover:text-accent'
+                      : 'border border-black/[0.12] bg-white text-text2 hover:border-accent hover:text-accent hover:bg-accent-lt/40',
+                ].join(' ')}
+              >
+                {t.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
+              </button>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -364,22 +421,38 @@ function PromptTab() {
     { title: 'Iterate & Refine',         desc: 'Start broad and progressively refine with follow-up prompts.', example: "Now make it more concise and add 3 bullet-point takeaways at the end." },
   ];
   return (
-    <div className="space-y-3 sm:space-y-5">
-      {tips.map((tip) => (
-        <div key={tip.title} className="border border-black/[0.08] rounded-sm p-3 sm:p-4">
-          <h4 className="font-semibold text-[0.82rem] sm:text-sm text-text1 mb-1">{tip.title}</h4>
-          <p className="text-[0.75rem] sm:text-[0.8rem] text-text2 mb-2 sm:mb-3">{tip.desc}</p>
-          <div className="bg-bg2 rounded px-2.5 sm:px-3 py-2 flex items-start justify-between gap-2">
-            <p className="text-[0.7rem] sm:text-[0.75rem] text-text2 italic flex-1">{tip.example}</p>
-            <button className="text-text3 hover:text-accent flex-shrink-0 mt-0.5"><FiCopy size={12} /></button>
+    <div className="space-y-3 sm:space-y-4">
+      {tips.map((tip, i) => (
+        <motion.div
+          key={tip.title}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.04 * i }}
+          className={`${modalCard} p-4 sm:p-5`}
+        >
+          <h4 className="font-syne font-bold text-[0.84rem] sm:text-sm text-text1 mb-1.5">{tip.title}</h4>
+          <p className="text-[0.75rem] sm:text-[0.82rem] text-text2 mb-3 sm:mb-3.5 leading-relaxed">{tip.desc}</p>
+          <div className="rounded-xl border border-black/[0.06] bg-gradient-to-b from-bg2/80 to-bg2/40 px-3 sm:px-3.5 py-2.5 flex items-start justify-between gap-2.5 shadow-inner">
+            <p className="text-[0.7rem] sm:text-[0.76rem] text-text2 italic flex-1 leading-relaxed">{tip.example}</p>
+            <button
+              type="button"
+              className="rounded-lg p-1.5 text-text3 hover:text-accent hover:bg-white/80 transition-colors border-none bg-transparent cursor-pointer shrink-0"
+              aria-label="Copy example"
+            >
+              <FiCopy size={14} />
+            </button>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
 }
 
 function AgentTab({ model }: { model: M }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const dispatch = useDispatch();
+
   const steps = [
     "Define your agent's goal and the tasks it should autonomously complete",
     `Choose ${model.name} as the backbone — it excels at complex instructions`,
@@ -388,21 +461,94 @@ function AgentTab({ model }: { model: M }) {
     'Test with edge cases: ambiguous inputs, failures, and multi-step tasks',
     'Deploy with monitoring — track token usage, completion rate, and errors',
   ];
+
+  const openAgentBuilder = () => {
+    dispatch(setCurrentModelId(model.id));
+    dispatch(openApp('agents'));
+    dispatch(closeModal());
+    router.push('/agents');
+  };
+
+  const askTheHub = () => {
+    const text = t('agents.banner_description');
+    dispatch(
+      addMessage({
+        id: Date.now().toString(),
+        role: 'user',
+        content: text,
+        timestamp: Date.now(),
+      }),
+    );
+    dispatch(setOnboardPhase('chat'));
+    dispatch(setObDone(true));
+    dispatch(setCurrentModelId(model.id));
+    dispatch(openApp('chat'));
+    dispatch(closeModal());
+    router.push('/chathub');
+  };
+
   return (
-    <div className="space-y-3 sm:space-y-4">
-      <div className="bg-accent-lt border border-accent/25 rounded-sm p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3">
-        <span className="text-xl sm:text-2xl flex-shrink-0">✦</span>
+    <div className="space-y-4 sm:space-y-5">
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`${modalCard} p-4 sm:p-5 flex items-start gap-3 sm:gap-4 bg-gradient-to-br from-accent-lt/90 via-white to-white border-accent/20`}
+      >
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-accent text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent/30">
+          <FiStar size={22} strokeWidth={2} aria-hidden />
+        </div>
         <div>
-          <div className="font-semibold text-[0.82rem] sm:text-sm text-accent mb-0.5">{model.name} is great for agents</div>
-          <div className="text-[0.72rem] sm:text-[0.8rem] text-text2">Strong instruction-following, long context, and reliable tool use.</div>
+          <div className="font-syne font-bold text-[0.86rem] sm:text-[0.95rem] text-accent mb-1">
+            {model.name} is great for agents
+          </div>
+          <div className="text-[0.73rem] sm:text-[0.8rem] text-text2 leading-relaxed">
+            Strong instruction-following, long context, and reliable tool use.
+          </div>
         </div>
+      </motion.div>
+
+      <div className={`${modalCard} p-4 sm:p-5`}>
+        <h4 className="font-syne font-bold text-[0.82rem] sm:text-sm text-text1 mb-3 sm:mb-4 flex items-center gap-2">
+          <span className="w-1 h-4 rounded-full bg-accent" aria-hidden />
+          Build checklist
+        </h4>
+        <ul className="space-y-3">
+          {steps.map((s, i) => (
+            <li key={i} className="flex gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-bg2 border border-black/[0.06] text-text1 text-[0.7rem] sm:text-xs font-bold flex items-center justify-center flex-shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+                {i + 1}
+              </div>
+              <p className="text-[0.75rem] sm:text-[0.83rem] text-text2 leading-relaxed pt-0.5">{s}</p>
+            </li>
+          ))}
+        </ul>
       </div>
-      {steps.map((s, i) => (
-        <div key={i} className="flex gap-2.5 sm:gap-3">
-          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-bg2 text-text2 text-[0.65rem] sm:text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</div>
-          <p className="text-[0.75rem] sm:text-[0.83rem] text-text2 leading-relaxed">{s}</p>
-        </div>
-      ))}
+
+      <p className="text-[0.72rem] sm:text-[0.78rem] text-text2 leading-relaxed px-0.5">
+        {t('modelModal.deploy_monitoring_hint')}
+      </p>
+
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3 pt-1">
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={openAgentBuilder}
+          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-accent text-white text-[0.8rem] sm:text-[0.82rem] font-semibold px-5 py-2.5 sm:py-3 shadow-md shadow-accent/25 border-none cursor-pointer font-instrument"
+        >
+          {t('modelModal.open_agent_builder')}
+          <FiArrowRight size={16} strokeWidth={2.5} aria-hidden />
+        </motion.button>
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={askTheHub}
+          className="inline-flex items-center justify-center rounded-full border-[1.5px] border-accent text-accent bg-white text-[0.8rem] sm:text-[0.82rem] font-semibold px-5 py-2.5 sm:py-3 cursor-pointer font-instrument hover:bg-accent-lt/50 transition-colors"
+        >
+          {t('modelModal.ask_the_hub')}
+        </motion.button>
+      </div>
     </div>
   );
 }
@@ -414,37 +560,56 @@ function ReviewsTab({ model }: { model: M }) {
     { user: 'Dev Pro',  rating: 5, date: 'Feb 2026', text: 'Game-changer for our engineering team. Code generation and review quality is exceptional.' },
   ];
   return (
-    <div>
-      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6 p-3 sm:p-4 bg-bg rounded-sm border border-black/[0.08]">
-        <div className="text-center flex-shrink-0">
-          <div className="text-3xl sm:text-4xl font-bold font-syne text-text1">{model.rating}</div>
-          <div className="flex text-amber-400 text-xs sm:text-sm mt-0.5">{'★'.repeat(Math.round(model.rating))}</div>
-          <div className="text-[0.62rem] sm:text-xs text-text3 mt-0.5">{(model.reviews / 1000).toFixed(1)}k reviews</div>
+    <div className="space-y-4 sm:space-y-5">
+      <div className={`${modalCard} p-4 sm:p-5 flex items-center gap-4 sm:gap-6`}>
+        <div className="text-center flex-shrink-0 rounded-2xl bg-gradient-to-b from-amber-50/90 to-white border border-amber-200/40 px-4 py-3 sm:px-5 sm:py-4 shadow-inner">
+          <div className="text-3xl sm:text-[2.25rem] font-bold font-syne text-text1 leading-none tabular-nums">
+            {model.rating}
+          </div>
+          <div className="flex justify-center text-amber-500 text-sm sm:text-base mt-1.5 gap-0.5">
+            {'★'.repeat(Math.round(model.rating))}
+          </div>
+          <div className="text-[0.62rem] sm:text-[0.68rem] text-text3 mt-2 font-medium">
+            {(model.reviews / 1000).toFixed(1)}k reviews
+          </div>
         </div>
-        <div className="flex-1 space-y-1 sm:space-y-1.5">
+        <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
           {[5, 4, 3, 2, 1].map((n) => (
-            <div key={n} className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-[0.62rem] text-text3 w-2">{n}</span>
-              <div className="flex-1 bg-bg2 rounded-full h-1.5">
-                <div className="bg-amber-400 h-1.5 rounded-full" style={{ width: `${n === 5 ? 70 : n === 4 ? 20 : n === 3 ? 7 : 2}%` }} />
+            <div key={n} className="flex items-center gap-2 sm:gap-2.5">
+              <span className="text-[0.65rem] text-text3 w-2.5 tabular-nums font-medium">{n}</span>
+              <div className="flex-1 bg-bg2 rounded-full h-2 overflow-hidden border border-black/[0.04]">
+                <div
+                  className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full"
+                  style={{ width: `${n === 5 ? 70 : n === 4 ? 20 : n === 3 ? 7 : 2}%` }}
+                />
               </div>
             </div>
           ))}
         </div>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-3 sm:space-y-4">
         {reviews.map((r, i) => (
-          <div key={i} className="border border-black/[0.08] rounded-sm p-3 sm:p-4">
-            <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-accent text-white text-[0.65rem] sm:text-xs font-bold flex items-center justify-center flex-shrink-0">{r.user[0]}</div>
-              <div>
-                <div className="text-[0.8rem] sm:text-sm font-medium text-text1">{r.user}</div>
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 * i }}
+            className={`${modalCard} p-4 sm:p-[1.125rem]`}
+          >
+            <div className="flex items-center gap-3 mb-2 sm:mb-2.5">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-accent to-accent2 text-white text-[0.72rem] sm:text-sm font-bold flex items-center justify-center flex-shrink-0 shadow-md shadow-accent/25 ring-2 ring-white">
+                {r.user[0]}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[0.82rem] sm:text-sm font-semibold text-text1">{r.user}</div>
                 <div className="text-[0.62rem] sm:text-[0.68rem] text-text3">{r.date}</div>
               </div>
-              <div className="ml-auto flex text-amber-400 text-[0.7rem] sm:text-xs">{'★'.repeat(r.rating)}</div>
+              <div className="flex text-amber-500 text-[0.72rem] sm:text-sm shrink-0 gap-px">
+                {'★'.repeat(r.rating)}
+              </div>
             </div>
-            <p className="text-[0.75rem] sm:text-[0.82rem] text-text2 leading-relaxed">{r.text}</p>
-          </div>
+            <p className="text-[0.75rem] sm:text-[0.82rem] text-text2 leading-relaxed pl-0.5">{r.text}</p>
+          </motion.div>
         ))}
       </div>
     </div>

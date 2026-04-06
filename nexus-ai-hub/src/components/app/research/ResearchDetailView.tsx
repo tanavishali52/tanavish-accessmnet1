@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiMessageCircle, FiCopy, FiHeart, FiShare2, FiZap } from 'react-icons/fi';
 import { apiResearchDetail, type ResearchDetail } from '@/lib/api';
 import Skeleton from '@/components/shared/Skeleton';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
 
 const CATEGORY_BADGE = 'text-[0.65rem] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full bg-blue-lt text-blue';
 
@@ -129,7 +130,7 @@ export default function ResearchDetailView({ articleId }: { articleId: string })
                   key={m.name}
                   className="inline-flex items-center gap-1.5 text-[0.78rem] font-medium text-text1 bg-white border border-black/[0.08] px-3 py-1.5 rounded-full"
                 >
-                  <span className="text-base leading-none">{m.icon}</span>
+                  <CatalogIcon name={m.icon} size={16} className="text-text1" />
                   {m.name}
                 </span>
               ))}

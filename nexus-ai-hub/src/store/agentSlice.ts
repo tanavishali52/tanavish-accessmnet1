@@ -1,7 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { AgentRecord, AgentRunResult, AgentTemplate } from '@/lib/api';
 
-export type BuilderStep = 'template' | 'configure' | 'test' | 'deploy';
+export type BuilderStep =
+  | 'template'
+  | 'configure'
+  | 'system_prompt'
+  | 'tools_apis'
+  | 'memory'
+  | 'test'
+  | 'deploy';
+
+export type AgentMemoryMode = 'none' | 'short_term' | 'short_and_long_term';
 
 export interface AgentDraft {
   name: string;
@@ -9,12 +18,14 @@ export interface AgentDraft {
   modelId: string;
   systemPrompt: string;
   tools: string[];
+  memoryMode: AgentMemoryMode;
 }
 
 interface AgentState {
   agents: AgentRecord[];
   templates: AgentTemplate[];
   status: 'idle' | 'loading' | 'loaded' | 'error';
+  userAgentsStatus: 'idle' | 'loading' | 'loaded' | 'error';
   builderOpen: boolean;
   builderStep: BuilderStep;
   draft: AgentDraft;
@@ -29,12 +40,14 @@ const DEFAULT_DRAFT: AgentDraft = {
   modelId: 'gpt5',
   systemPrompt: '',
   tools: [],
+  memoryMode: 'short_term',
 };
 
 const initialState: AgentState = {
   agents: [],
   templates: [],
   status: 'idle',
+  userAgentsStatus: 'idle',
   builderOpen: false,
   builderStep: 'template',
   draft: DEFAULT_DRAFT,
@@ -71,6 +84,19 @@ const agentSlice = createSlice({
     removeAgent(state, action: PayloadAction<string>) {
       state.agents = state.agents.filter((a) => a._id !== action.payload);
     },
+    setUserAgents(state, action: PayloadAction<AgentRecord[]>) {
+      state.agents = action.payload;
+      state.userAgentsStatus = 'loaded';
+    },
+    setUserAgentsLoading(state) {
+      state.userAgentsStatus = 'loading';
+    },
+    setUserAgentsError(state) {
+      state.userAgentsStatus = 'error';
+    },
+    setEditingId(state, action: PayloadAction<string | null>) {
+      state.editingId = action.payload;
+    },
     openBuilder(state, action: PayloadAction<AgentRecord | undefined>) {
       state.builderOpen = true;
       state.builderStep = action.payload ? 'configure' : 'template';
@@ -83,6 +109,7 @@ const agentSlice = createSlice({
           modelId: action.payload.modelId,
           systemPrompt: action.payload.systemPrompt,
           tools: action.payload.tools,
+          memoryMode: (action.payload.memoryMode as AgentMemoryMode | undefined) ?? 'short_term',
         };
       } else {
         state.editingId = null;
@@ -127,6 +154,8 @@ export const {
   setAgents, setAgentsLoading, setAgentsError,
   setTemplates,
   addAgent, updateAgent, removeAgent,
+  setUserAgents, setUserAgentsLoading, setUserAgentsError,
+  setEditingId,
   openBuilder, closeBuilder, setBuilderStep,
   setDraft, toggleTool,
   setRunResult, setRunLoading,

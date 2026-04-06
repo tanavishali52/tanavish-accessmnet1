@@ -14,16 +14,21 @@ import {
 import { showToast } from '@/store/appSlice';
 import { motion } from 'framer-motion';
 import { apiChatMessage, Model } from '@/lib/api';
+import { takeHeroChatFiles } from '@/lib/heroChatBridge';
 import { useChatPersistence } from '@/hooks/useChatPersistence';
 import { useTranslation } from 'react-i18next';
 import { FiSend, FiMic, FiPaperclip, FiImage, FiX } from 'react-icons/fi';
+import { MdKeyboardVoice } from 'react-icons/md';
+import ToolbarTooltipButton from '@/components/shared/ToolbarTooltipButton';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
+import Skeleton from '@/components/shared/Skeleton';
 
 const getCategoryTabs = (t: any) => [
-  { id: 'usecases', label: `⚡ ${t('chat.area.modes.usecases')}`, prompts: [t('chat.area.suggestions.summarise'), t('chat.area.suggestions.product_desc'), t('chat.area.suggestions.content_calendar'), t('chat.area.suggestions.pro_email')] },
-  { id: 'code',     label: `💻 ${t('chat.area.modes.code')}`,      prompts: ['Review my code for bugs', 'Write unit tests', 'Explain this algorithm', 'Optimise this SQL query'] },
-  { id: 'analyze',  label: `📊 ${t('chat.area.modes.analyze')}`,   prompts: ['Analyze this dataset', 'Find patterns in this data', 'Compare these two approaches', 'Create a SWOT analysis'] },
-  { id: 'create',   label: `✍️ ${t('chat.area.modes.create')}`,    prompts: ['Write a blog post about', 'Create social media captions', 'Draft a press release', 'Write ad copy for'] },
-  { id: 'learn',    label: `🎓 ${t('chat.area.modes.learn')}`,     prompts: ['Explain quantum computing', 'Teach me about transformers', 'What is RAG in AI?', 'How does RLHF work?'] },
+  { id: 'usecases', tabIcon: 'FiZap', label: t('chat.area.modes.usecases'), prompts: [t('chat.area.suggestions.summarise'), t('chat.area.suggestions.product_desc'), t('chat.area.suggestions.content_calendar'), t('chat.area.suggestions.pro_email')] },
+  { id: 'code',     tabIcon: 'FiCode', label: t('chat.area.modes.code'),      prompts: ['Review my code for bugs', 'Write unit tests', 'Explain this algorithm', 'Optimise this SQL query'] },
+  { id: 'analyze',  tabIcon: 'FiBarChart2', label: t('chat.area.modes.analyze'),   prompts: ['Analyze this dataset', 'Find patterns in this data', 'Compare these two approaches', 'Create a SWOT analysis'] },
+  { id: 'create',   tabIcon: 'FiEdit3', label: t('chat.area.modes.create'),    prompts: ['Write a blog post about', 'Create social media captions', 'Draft a press release', 'Write ad copy for'] },
+  { id: 'learn',    tabIcon: 'FiBookOpen', label: t('chat.area.modes.learn'),     prompts: ['Explain quantum computing', 'Teach me about transformers', 'What is RAG in AI?', 'How does RLHF work?'] },
 ];
 
 export default function ChatInput() {
@@ -38,23 +43,28 @@ export default function ChatInput() {
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const [activeCat, setActiveCat] = useState('usecases');
   const [isRecording, setIsRecording] = useState(false);
+  const [voiceTypingActive, setVoiceTypingActive] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
 
-  const { items: catalog } = useSelector((s: RootState) => s.models);
+  const { items: catalog, status: catalogStatus } = useSelector((s: RootState) => s.models);
   const currentModel = catalog.find((m) => m.id === currentModelId);
+  const catalogPending =
+    catalogStatus === 'loading' || (catalogStatus === 'idle' && catalog.length === 0);
 
   const CATEGORY_TABS = getCategoryTabs(t);
 
   const MAX_ATTACHMENTS = 6;
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-  const pickFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const picked = Array.from(files);
+  const pickFiles = (files: FileList | File[] | null) => {
+    if (!files) return;
+    const picked = Array.isArray(files) ? files : Array.from(files);
+    if (picked.length === 0) return;
     const tooLarge = picked.find((f) => f.size > MAX_FILE_SIZE);
     if (tooLarge) {
       dispatch(showToast(`"${tooLarge.name}" is too large (max 10MB).`));
@@ -105,7 +115,18 @@ export default function ChatInput() {
     });
   };
 
+  const stopVoiceTyping = useCallback(() => {
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    recognitionRef.current = null;
+    setVoiceTypingActive(false);
+  }, []);
+
   const startVoiceRecording = async () => {
+    stopVoiceTyping();
     // Check if MediaRecorder is supported
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       dispatch(showToast('Voice recording is not supported in this browser.'));
@@ -158,7 +179,7 @@ export default function ChatInput() {
         });
         
         // Add the audio file to attachments
-        pickFiles([audioFile] as any);
+        pickFiles([audioFile]);
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
@@ -202,6 +223,48 @@ export default function ChatInput() {
     }
   };
 
+  const toggleVoiceTyping = useCallback(() => {
+    if (voiceTypingActive) {
+      stopVoiceTyping();
+      return;
+    }
+    if (isRecording) {
+      stopVoiceRecording();
+    }
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      dispatch(showToast('Voice typing is not supported in this browser.'));
+      return;
+    }
+    try {
+      const recognition = new SpeechRecognitionAPI();
+      recognition.lang = typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US';
+      recognition.interimResults = true;
+      recognition.continuous = true;
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((r: any) => r[0]?.transcript ?? '')
+          .join('');
+        setText(transcript);
+      };
+      recognition.onerror = () => {
+        setVoiceTypingActive(false);
+        recognitionRef.current = null;
+      };
+      recognition.onend = () => {
+        setVoiceTypingActive(false);
+        recognitionRef.current = null;
+      };
+      recognitionRef.current = recognition;
+      recognition.start();
+      setVoiceTypingActive(true);
+      dispatch(showToast('Voice typing… speak to fill the message'));
+    } catch {
+      setVoiceTypingActive(false);
+      dispatch(showToast('Could not start voice typing.'));
+    }
+  }, [voiceTypingActive, isRecording, stopVoiceTyping, dispatch]);
+
   useEffect(() => {
     return () => {
       // Cleanup media recorder on unmount
@@ -211,11 +274,37 @@ export default function ChatInput() {
     };
   }, [isRecording]);
 
-  const handleSend = useCallback(async (textOverride?: string) => {
+  useEffect(() => {
+    return () => {
+      try {
+        recognitionRef.current?.stop();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, []);
+
+  const handleSend = useCallback(async (textOverride?: string, heroAttachmentFiles?: File[]) => {
     const fromOverride = textOverride !== undefined;
-    const tVal = (fromOverride ? textOverride : text).trim();
-    const attachSnap = fromOverride ? [] : [...attachments];
-    const filesSnap = fromOverride ? [] : [...attachmentFiles];
+    const hasHeroFiles = Boolean(heroAttachmentFiles && heroAttachmentFiles.length > 0);
+    const tVal = (fromOverride ? String(textOverride).trim() : text.trim());
+    let attachSnap: ChatAttachment[];
+    let filesSnap: File[];
+    if (fromOverride && !hasHeroFiles) {
+      attachSnap = [];
+      filesSnap = [];
+    } else if (hasHeroFiles) {
+      filesSnap = [...heroAttachmentFiles!];
+      attachSnap = filesSnap.map((f, i) => ({
+        id: `local_${Date.now()}_${i}_${Math.random().toString(36).slice(2)}`,
+        name: f.name,
+        size: f.size,
+        type: f.type || 'application/octet-stream',
+      }));
+    } else {
+      attachSnap = [...attachments];
+      filesSnap = [...attachmentFiles];
+    }
     if (!tVal && attachSnap.length === 0) return;
     const payloadText = tVal || `Attached ${attachSnap.length} file${attachSnap.length > 1 ? 's' : ''}`;
     const filesSnapshot = filesSnap;
@@ -291,8 +380,9 @@ export default function ChatInput() {
   useEffect(() => {
     if (!pendingAutoMessage?.trim()) return;
     const msg = pendingAutoMessage.trim();
+    const heroFiles = takeHeroChatFiles();
     dispatch(setPendingAutoMessage(null));
-    void handleSend(msg);
+    void handleSend(msg, heroFiles.length > 0 ? heroFiles : undefined);
   }, [pendingAutoMessage, dispatch, handleSend]);
 
   return (
@@ -311,6 +401,7 @@ export default function ChatInput() {
                   : 'bg-none border-black/[0.14] text-text2 hover:border-accent hover:text-accent'
               }`}
             >
+              <CatalogIcon name={cat.tabIcon} size={14} className={activeCat === cat.id ? 'text-white' : 'text-accent'} />
               {cat.label}
             </button>
           ))}
@@ -335,7 +426,7 @@ export default function ChatInput() {
       {/* Input row */}
       <div className="flex gap-2 items-end px-3 sm:px-5 py-2.5 sm:py-3">
         <div
-          className="flex-1 bg-bg border-[1.5px] border-black/[0.14] overflow-hidden focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(200,98,42,0.08)] transition-all"
+          className="flex-1 bg-bg border-[1.5px] border-black/[0.14] overflow-visible focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(200,98,42,0.08)] transition-all"
           style={{ borderRadius: 12 }}
         >
           {attachments.length > 0 && (
@@ -390,39 +481,89 @@ export default function ChatInput() {
                 e.currentTarget.value = '';
               }}
             />
-            <button
+            <ToolbarTooltipButton
+              tooltip={t('common.tooltips.voice_record')}
               onClick={() => {
                 if (isRecording) stopVoiceRecording();
-                else startVoiceRecording();
+                else void startVoiceRecording();
               }}
-              className={`w-7 h-7 rounded-[6px] flex items-center justify-center transition-all border-none cursor-pointer ${isRecording ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-none text-text3 hover:bg-bg2 hover:text-text1'}`}
+              className={`w-7 h-7 rounded-[6px] flex items-center justify-center transition-all border-none cursor-pointer ${
+                isRecording
+                  ? 'bg-red-50 text-red-500 animate-pulse'
+                  : 'bg-violet-100/90 text-violet-700 hover:bg-violet-100'
+              }`}
+              aria-label={isRecording ? 'Stop recording' : 'Record voice'}
             >
               <FiMic size={14} />
-            </button>
-            <button
+            </ToolbarTooltipButton>
+            <ToolbarTooltipButton
+              tooltip={t('common.tooltips.attach_file')}
               onClick={() => fileInputRef.current?.click()}
-              className="w-7 h-7 rounded-[6px] flex items-center justify-center text-text3 hover:bg-bg2 hover:text-text1 transition-all border-none bg-none cursor-pointer">
+              className="w-7 h-7 rounded-[6px] flex items-center justify-center text-amber-900 transition-all border-none cursor-pointer bg-amber-50/95 hover:bg-amber-100"
+              aria-label="Attach files"
+            >
               <FiPaperclip size={14} />
-            </button>
-            <button
+            </ToolbarTooltipButton>
+            <ToolbarTooltipButton
+              tooltip={t('common.tooltips.attach_image')}
               onClick={() => imageInputRef.current?.click()}
-              className="hidden sm:inline-flex w-7 h-7 rounded-[6px] items-center justify-center text-text3 hover:bg-bg2 hover:text-text1 transition-all border-none bg-none cursor-pointer">
+              className="hidden sm:inline-flex w-7 h-7 rounded-[6px] items-center justify-center text-sky-800 transition-all border-none cursor-pointer bg-sky-50/95 hover:bg-sky-100"
+              aria-label="Attach images"
+            >
               <FiImage size={14} />
-            </button>
-            <div className="ml-auto flex items-center gap-1 text-[0.68rem] sm:text-[0.72rem] text-text3 cursor-pointer hover:text-text1 transition-colors truncate max-w-[120px] sm:max-w-none">
-              <span>{currentModel?.icon}</span>
-              <span className="truncate">{currentModel?.name}</span>
-              <span>▾</span>
+            </ToolbarTooltipButton>
+            <ToolbarTooltipButton
+              tooltip={t('common.tooltips.voice_typing')}
+              onClick={() => toggleVoiceTyping()}
+              className={`w-7 h-7 rounded-[6px] flex items-center justify-center transition-all border-none cursor-pointer ${
+                voiceTypingActive
+                  ? 'bg-teal-600 text-white shadow-sm'
+                  : 'bg-teal-50 text-teal-800 hover:bg-teal-100'
+              }`}
+              aria-label={voiceTypingActive ? 'Stop voice typing' : 'Voice typing'}
+            >
+              <MdKeyboardVoice size={16} />
+            </ToolbarTooltipButton>
+            <div className="relative group ml-auto flex items-center gap-1 text-[0.68rem] sm:text-[0.72rem] text-text3 cursor-pointer hover:text-text1 transition-colors truncate max-w-[120px] sm:max-w-none">
+              {catalogPending && !currentModel ? (
+                <>
+                  <Skeleton width={14} height={14} borderRadius={4} className="shrink-0" />
+                  <Skeleton width={72} height="0.7rem" className="max-w-[45%]" />
+                </>
+              ) : (
+                <>
+                  <CatalogIcon name={currentModel?.icon ?? 'FiCpu'} size={14} className="text-text3 shrink-0" />
+                  <span className="truncate">{currentModel?.name ?? '—'}</span>
+                  <span>▾</span>
+                </>
+              )}
+              <span
+                role="tooltip"
+                className="pointer-events-auto absolute bottom-full right-0 z-30 mb-1.5 cursor-default select-none rounded-full bg-neutral-900 px-2.5 py-1 text-[0.7rem] font-semibold leading-tight text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 whitespace-nowrap"
+                onPointerDown={(e) => e.preventDefault()}
+              >
+                {t('common.tooltips.active_model')}
+              </span>
             </div>
           </div>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
-          onClick={() => void handleSend()}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent2 transition-colors border-none cursor-pointer flex-shrink-0"
-        >
-          <FiSend size={15} />
-        </motion.button>
+        <span className="relative inline-flex group flex-shrink-0">
+          <motion.button
+            whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+            onClick={() => void handleSend()}
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent2 transition-colors border-none cursor-pointer"
+            aria-label={t('common.tooltips.send_message')}
+          >
+            <FiSend size={15} />
+          </motion.button>
+          <span
+            role="tooltip"
+            className="pointer-events-auto absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 cursor-default select-none rounded-full bg-neutral-900 px-2.5 py-1 text-[0.7rem] font-semibold leading-tight text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 whitespace-nowrap"
+            onPointerDown={(e) => e.preventDefault()}
+          >
+            {t('common.tooltips.send_message')}
+          </span>
+        </span>
       </div>
     </div>
   );

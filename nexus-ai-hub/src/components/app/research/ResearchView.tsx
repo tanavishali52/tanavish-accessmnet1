@@ -62,6 +62,7 @@ export default function ResearchView() {
   const router = useRouter();
   const { research, status } = useSelector((s: RootState) => s.models);
   const [categoryFilter, setCategoryFilter] = useState<ResearchFilterKey>('all');
+  const feedPending = status === 'loading' || (status === 'idle' && research.length === 0);
 
   const visibleResearch = useMemo(() => {
     if (categoryFilter === 'all') return research;
@@ -118,10 +119,14 @@ export default function ResearchView() {
 
         {/* Feed */}
         <div className="flex flex-col gap-3 sm:gap-4">
-          {status === 'loading' ? (
+          {feedPending ? (
             Array.from({ length: 4 }).map((_, i) => (
               <ResearchItemSkeleton key={i} />
             ))
+          ) : status === 'error' ? (
+            <p className="text-[0.85rem] text-text2 text-center py-10 bg-white border border-black/[0.08] rounded-2xl">
+              Could not load the research feed. Refresh and try again.
+            </p>
           ) : visibleResearch.length === 0 ? (
             <p className="text-[0.85rem] text-text2 text-center py-10 bg-white border border-black/[0.08] rounded-2xl">
               No items in this category yet.

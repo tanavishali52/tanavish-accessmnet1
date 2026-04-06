@@ -12,10 +12,7 @@ import ModelModal from '@/components/shared/ModelModal';
 import Toast from '@/components/shared/Toast';
 import { ActiveTab, openApp } from '@/store/appSlice';
 import { setSession } from '@/store/authSlice';
-import { setModels, setModelsLoading, setModelsError, setLabs, setResearch } from '@/store/modelsSlice';
-import { setTemplates, setAgentsLoading, setAgentsError } from '@/store/agentSlice';
-import { apiSession, apiGuest, apiModels, apiLabs, apiAgents, apiResearch } from '@/lib/api';
-import type { Model, Lab, AgentTemplate, ResearchItem } from '@/lib/api';
+import { apiSession, apiGuest } from '@/lib/api';
 
 export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
   const dispatch = useDispatch();
@@ -23,29 +20,6 @@ export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
   useEffect(() => {
     dispatch(openApp(tab));
   }, [dispatch, tab]);
-
-  // Fetch all catalog data from backend on mount
-  useEffect(() => {
-    dispatch(setModelsLoading());
-    dispatch(setAgentsLoading());
-    Promise.all([
-      apiModels(),
-      apiLabs(),
-      apiAgents(),
-      apiResearch(),
-    ])
-      .then(([models, labs, agents, research]) => {
-        dispatch(setModels(models));
-        dispatch(setLabs(labs));
-        dispatch(setTemplates(agents));
-        dispatch(setResearch(research));
-      })
-      .catch((err) => {
-        console.error('Failed to fetch catalog:', err);
-        dispatch(setModelsError());
-        dispatch(setAgentsError());
-      });
-  }, [dispatch]);
 
   // Restore session from backend cookie on mount, or create guest session
   useEffect(() => {
