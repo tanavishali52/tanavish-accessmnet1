@@ -316,13 +316,102 @@ npm run lint
 - Write meaningful commit messages
 - Add tests for new features
 
+## 🤖 Agentic Workflow (.claude)
+
+This repository uses a structured Claude Code agentic setup located in `.claude/`. The agents, rules, and skills here drive the AI-assisted development workflow.
+
+### Agents
+
+#### Frontend Agents
+
+| Agent | File | Responsibility |
+|---|---|---|
+| Frontend Developer | `.claude/agents/frontend-developer.md` | Next.js UI/UX implementation with Tailwind & Redux |
+| i18n Agent | `.claude/agents/i18n-agent.md` | Translation keys, locale files, `useTranslation()` integration, new language support |
+| Animation & Motion Agent | `.claude/agents/animation-motion-agent.md` | Framer Motion transitions, entrance/exit, stagger lists, modal/sidebar patterns |
+| State Debugging Agent | `.claude/agents/state-debugging-agent.md` | Redux stale state, selector performance, localStorage hydration, re-render diagnosis |
+| Accessibility Agent | `.claude/agents/accessibility-agent.md` | ARIA labels, keyboard navigation, focus trapping, WCAG 2.1 AA compliance |
+| QA Validation | `.claude/agents/qa-validation-agent.md` | Functional testing, UI audit, and code quality review |
+
+#### Backend Agents
+
+| Agent | File | Responsibility |
+|---|---|---|
+| Nest Backend Engineer | `.claude/agents/nest-backend.md` | NestJS API design, Mongoose schemas, and authentication |
+| Security Hardening Agent | `.claude/agents/security-hardening-agent.md` | bcrypt, auth guards, rate limiting, CSRF, file upload security |
+| Database & Mongoose Agent | `.claude/agents/database-mongoose-agent.md` | Schema design, indexes, query optimisation, pagination, soft delete |
+| File Upload & Storage Agent | `.claude/agents/file-upload-storage-agent.md` | Multer config, MIME validation, static serving, cloud storage migration |
+| API Versioning Agent | `.claude/agents/api-versioning-agent.md` | URI versioning, breaking change management, deprecation workflow |
+
+#### Project Management Agents
+
+| Agent | File | Responsibility |
+|---|---|---|
+| Jira Agent | `.claude/agents/jira-agent.md` | Ticket lifecycle, sprint tracking, PR linkage, and bug triage |
+
+### Rules
+
+| Rule | File | Coverage |
+|---|---|---|
+| Code Style | `.claude/rules/code-style.md` | File naming, imports, TypeScript, component structure, Tailwind |
+| Error Handling | `.claude/rules/error-handling.md` | Server actions, Redux state, error boundaries, fallback defaults |
+| Security | `.claude/rules/security.md` | Secrets, auth guards, XSS prevention, prompt sanitization |
+| Testing | `.claude/rules/testing.md` | Unit tests, E2E tests, coverage thresholds, test isolation |
+| Performance | `.claude/rules/performance.md` | Pagination, `.lean()`, caching, memoized selectors, bundle size |
+| Accessibility | `.claude/rules/accessibility.md` | WCAG 2.1 AA, ARIA, focus management, contrast, keyboard nav |
+| Environment Config | `.claude/rules/environment-config.md` | Secrets management, env var validation, `NEXT_PUBLIC_` restrictions |
+| Database | `.claude/rules/database.md` | Schema conventions, indexes, soft delete, pagination, no unbounded queries |
+| API Versioning | `.claude/rules/api-versioning.md` | Breaking change policy, version introduction, deprecation, sunset |
+
+### Skills
+
+#### Frontend Skills
+
+| Skill | File | When to Use |
+|---|---|---|
+| API Integration | `.claude/skills/api-integration.md` | Adding/refactoring `src/lib/api.ts` fetch calls and Redux data flow |
+| Code Review | `.claude/skills/code-review.md` | Reviewing Redux slices, component structure, and API patterns |
+| Frontend Routing & Auth | `.claude/skills/frontend-routing-auth.md` | Middleware, protected routes, and session-aware navigation |
+| PR Review | `.claude/skills/pr-review.md` | Final pre-submission checklist for responsiveness and code quality |
+| Responsive Design | `.claude/skills/responsive-design.md` | Mobile-first layout, sidebar behaviour, and Tailwind breakpoints |
+| Redux Slice Authoring | `.claude/skills/redux-slice-authoring.md` | Writing new slices, async actions, localStorage persistence, `createSelector` |
+| Framer Motion Patterns | `.claude/skills/framer-motion-patterns.md` | Fade/slide, AnimatePresence, stagger lists, modals, sidebars |
+| i18n Translation | `.claude/skills/i18n-translation.md` | Adding translation keys, locale files, `useTranslation()`, new languages |
+| Form Validation | `.claude/skills/form-validation.md` | Field-level validation, error display, submission state, Redux wiring |
+| Skeleton Loading | `.claude/skills/skeleton-loading.md` | Loading placeholders wired to Redux status, skeleton layout patterns |
+
+#### Backend Skills
+
+| Skill | File | When to Use |
+|---|---|---|
+| NestJS Guards & Auth | `.claude/skills/nestjs-guards-auth.md` | Writing/applying `AuthGuard`, ownership checks, plan-based RBAC |
+| Mongoose Schema Design | `.claude/skills/mongoose-schema-design.md` | New schemas, field constraints, indexes, relationship modelling |
+| DTO Validation Patterns | `.claude/skills/dto-validation-patterns.md` | `class-validator` decorators, `PartialType`, enum validation, nested DTOs |
+| Swagger Documentation | `.claude/skills/swagger-documentation.md` | `@ApiTags`, `@ApiOperation`, `@ApiResponse`, deprecation notices |
+| File Upload Handling | `.claude/skills/file-upload-handling.md` | Multer config, MIME filtering, static serving, cleanup on delete |
+
+#### Jira Skills
+
+| Skill | File | When to Use |
+|---|---|---|
+| Jira Issue Management | `.claude/skills/jira-issue-management.md` | Creating/updating tickets, bug reports, status transitions |
+| Jira Branch & PR Linking | `.claude/skills/jira-branch-pr-linking.md` | Branch naming, commit message format, PR-to-Jira linkage |
+| Jira Sprint Planning | `.claude/skills/jira-sprint-planning.md` | Sprint prep, story point estimation, and sprint summary reports |
+
+### Jira Issue Convention
+
+All work tracked in Jira follows the `NEXUS-<number>` key format. Branches must be named `<type>/NEXUS-<number>-short-description` and commit messages must begin with the issue key (e.g., `NEXUS-42: Add agent builder panel`). See `.claude/agents/jira-agent.md` for the full workflow.
+
+---
+
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a Jira ticket (or pick an existing `NEXUS-<number>` issue) and move it to **In Progress**
+3. Create a feature branch following the convention: `feat/NEXUS-<number>-short-description`
+4. Commit changes using the issue key: `git commit -m 'NEXUS-<number>: Add amazing feature'`
+5. Push to branch and open a Pull Request — transition the Jira ticket to **In Review**
+6. After merge and QA sign-off, close the ticket as **Done**
 
 ## 📄 License
 

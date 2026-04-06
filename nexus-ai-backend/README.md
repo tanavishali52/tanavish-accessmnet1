@@ -1,98 +1,140 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Nexus AI — Backend (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+> The NestJS API server powering the Nexus AI platform. Handles authentication, agent management, catalog browsing, and real-time chat via WebSockets.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Tech Stack
 
-## Description
+| Layer | Technology |
+|---|---|
+| Framework | NestJS (modular architecture) |
+| Database | MongoDB via Mongoose ODM |
+| Validation | `class-validator` + `class-transformer` |
+| Documentation | Swagger / OpenAPI (`/api/docs`) |
+| Session | `express-session` + `connect-mongo` |
+| Language | TypeScript (strict mode) |
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Module Overview
 
-## Project setup
-
-```bash
-$ npm install
+```
+src/
+├── agents/        # Agent CRUD — creation, config, retrieval
+├── auth/          # Registration, login, logout, session guards
+├── catalog/       # Catalog & marketplace item management
+├── chat/          # Chat message history
+├── chat-hub/      # WebSocket gateway for real-time chat
+├── common/        # Global ResponseInterceptor & HttpExceptionFilter
+├── data/          # Static seed data
+├── app.module.ts  # Root module wiring
+└── main.ts        # Bootstrap & Swagger setup
 ```
 
-## Compile and run the project
+## API Response Contract
 
-```bash
-# development
-$ npm run start
+All endpoints return a standardized envelope via the global `ResponseInterceptor`:
 
-# watch mode
-$ npm run start:dev
+```json
+// Success
+{ "success": true, "message": "Success", "data": <T> }
 
-# production mode
-$ npm run start:prod
+// Error (via HttpExceptionFilter)
+{ "success": false, "message": "Reason for error", "errors": [] }
 ```
 
-## Run tests
+Never wrap responses manually inside controllers — the interceptor handles it.
+
+## Main Endpoints
+
+### Authentication
+| Method | Path | Description |
+|---|---|---|
+| POST | `/auth/signup` | Register a new user |
+| POST | `/auth/login` | Login and create session |
+| POST | `/auth/logout` | Destroy session |
+
+### Agents
+| Method | Path | Description |
+|---|---|---|
+| GET | `/agents` | List all agents |
+| POST | `/agents` | Create a new agent |
+| GET | `/agents/:id` | Get agent details |
+| PUT | `/agents/:id` | Update agent |
+| DELETE | `/agents/:id` | Delete agent |
+
+### Catalog
+| Method | Path | Description |
+|---|---|---|
+| GET | `/catalog` | List catalog items |
+| GET | `/catalog/:id` | Get catalog item details |
+
+### Chat
+| Method | Path | Description |
+|---|---|---|
+| GET | `/chat` | Get chat history |
+| POST | `/chat` | Send a chat message |
+| WebSocket | `/chat-hub` | Real-time chat connection |
+
+Full interactive docs at `http://localhost:3001/api/docs` after starting the server.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js v16+
+- MongoDB instance (local or Atlas)
+
+### Setup
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
+Create a `.env` file in this directory:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+```env
+MONGODB_URI=mongodb://localhost:27017/nexus-ai
+MONGODB_ATLAS_URI=your_mongodb_atlas_uri
+SESSION_SECRET=your_session_secret_key
+NODE_ENV=development
+PORT=3001
+```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Running
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Development (watch mode)
+npm run start:dev
+
+# Production
+npm run build && npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Server starts at `http://localhost:3001`.
 
-## Resources
+## Available Scripts
 
-Check out a few resources that may come in handy when working with NestJS:
+| Command | Description |
+|---|---|
+| `npm run start` | Start the application |
+| `npm run start:dev` | Start with file-watch mode |
+| `npm run start:debug` | Start with debugger attached |
+| `npm run start:prod` | Start compiled production build |
+| `npm run build` | Compile TypeScript to `dist/` |
+| `npm run lint` | Run ESLint |
+| `npm run format` | Format code with Prettier |
+| `npm test` | Run unit tests |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:cov` | Run tests with coverage report |
+| `npm run test:e2e` | Run end-to-end tests |
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Security Guidelines
 
-## Support
+- All Server Actions and protected routes must verify session integrity before executing mutations.
+- Never expose raw stack traces to clients — use the global `HttpExceptionFilter`.
+- Environment secrets (`SESSION_SECRET`, DB URIs) must never be hardcoded.
+- Auth cookies use `HttpOnly`, `Secure`, and `SameSite=LAX` directives.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+See `.claude/rules/security.md` (root) for the full security ruleset.
 
-## Stay in touch
+## Jira Tracking
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Backend issues are tracked under the `NEXUS` Jira project. All branches must follow the convention `<type>/NEXUS-<number>-short-description`. See `.claude/agents/jira-agent.md` (root) for the full Jira workflow.
