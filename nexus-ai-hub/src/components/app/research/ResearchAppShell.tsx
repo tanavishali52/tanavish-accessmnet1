@@ -74,11 +74,11 @@ export default function ResearchAppShell({ children }: { children: ReactNode }) 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
-        className="flex flex-col h-screen overflow-hidden"
+        className="flex h-screen flex-col overflow-hidden md:flex-row"
         style={{ background: 'var(--bg)' }}
       >
         <AppNav />
-        <div className="flex-1 flex overflow-hidden">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
       </motion.div>
       <ModelModal />
       <Toast />

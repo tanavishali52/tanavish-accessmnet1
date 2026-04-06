@@ -80,11 +80,11 @@ export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
-        className="flex flex-col h-screen overflow-hidden"
+        className="flex h-screen flex-col overflow-hidden md:flex-row"
         style={{ background: 'var(--bg)' }}
       >
         <AppNav />
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <AnimatePresence mode="wait">
             {tab === 'chat' && (
               <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-1 overflow-hidden">

@@ -68,18 +68,21 @@ const TAB_ICONS: Record<AgentExploreTabId, ReactNode> = {
   analyze: <FiBarChart2 size={13} />,
 };
 
+const agentHubCard =
+  'rounded-2xl border border-black/[0.07] bg-white shadow-[0_4px_24px_-8px_rgba(15,23,42,0.08)]';
+
 function AgentTemplateSkeleton() {
   return (
-    <div className="bg-white border border-black/[0.08] p-3 shadow-card h-[120px] flex flex-col rounded-lg">
-      <Skeleton width={28} height={28} borderRadius={8} className="mb-2" />
+    <div className={`${agentHubCard} p-4 h-[132px] flex flex-col`}>
+      <Skeleton width={32} height={32} borderRadius={10} className="mb-2.5" />
       <Skeleton width="55%" height="0.85rem" className="mb-1.5" />
       <div className="space-y-1.5 flex-1 mb-2">
         <Skeleton width="100%" height="0.65rem" />
         <Skeleton width="70%" height="0.65rem" />
       </div>
-      <div className="flex gap-1">
-        <Skeleton width={44} height="1rem" borderRadius={8} />
-        <Skeleton width={52} height="1rem" borderRadius={8} />
+      <div className="flex gap-1.5">
+        <Skeleton width={48} height="1.05rem" borderRadius={999} />
+        <Skeleton width={52} height="1.05rem" borderRadius={999} />
       </div>
     </div>
   );
@@ -377,11 +380,91 @@ export default function AgentsView() {
       {/* Main hub or library — grows on small screens when sidebar is hidden */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-bg">
         {libraryOpen ? (
-          <div className="flex flex-1 min-h-0 overflow-hidden flex-col md:flex-row">
-            <div className="w-full md:w-[260px] md:shrink-0 flex flex-col min-h-0 max-h-[min(42vh,340px)] md:max-h-none border-b md:border-b-0 md:border-r border-black/[0.08] bg-white">
-              <div className="flex items-center justify-between px-3 sm:px-4 pt-4 sm:pt-5 pb-2 sm:pb-3 shrink-0">
+          <div className="flex flex-1 min-h-0 overflow-hidden flex-col md:flex-row bg-bg md:bg-bg">
+            {/* Agent Library — center column on desktop; below My Agents on small screens */}
+            <div className="order-2 md:order-1 flex-1 flex flex-col min-w-0 min-h-0 bg-white md:bg-bg">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 md:px-6 py-3.5 sm:py-4 border-b border-black/[0.08] bg-white shrink-0 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+                <div className="min-w-0">
+                  <div className="font-syne font-bold text-text1 text-[0.95rem] sm:text-[1.05rem] tracking-tight">
+                    {t('agents.agent_library')}
+                  </div>
+                  <div className="text-[0.7rem] sm:text-[0.74rem] text-text2 mt-0.5 leading-snug">{t('agents.library_sub')}</div>
+                </div>
+                <span className="text-[0.68rem] sm:text-[0.72rem] font-semibold text-accent border border-accent/30 rounded-full px-3 sm:px-3.5 py-1.5 bg-gradient-to-b from-accent-lt to-accent-lt/70 shadow-sm w-fit shrink-0">
+                  {t('agents.default_agents')}
+                </span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 min-h-0 overscroll-contain md:bg-bg">
+                {templatesPending ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 max-w-5xl mx-auto w-full">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <AgentTemplateSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 max-w-5xl mx-auto w-full">
+                    {tplForGrid.map((tmpl) => (
+                      <motion.button
+                        type="button"
+                        key={tmpl.title}
+                        whileHover={{ y: -3 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                        onClick={() => {
+                          startFromTemplate(tmpl);
+                          closeLibrary();
+                        }}
+                        className={`${agentHubCard} p-4 sm:p-[1.125rem] text-left cursor-pointer border-black/[0.06] hover:border-accent/25 hover:shadow-[0_14px_36px_-14px_rgba(15,23,42,0.18)] transition-all min-w-0 group`}
+                      >
+                        <div className="flex items-center gap-2.5 mb-2 min-w-0">
+                          <span className="shrink-0 w-10 h-10 rounded-xl bg-bg2 border border-black/[0.06] flex items-center justify-center text-text1 group-hover:border-accent/20 group-hover:bg-accent-lt/40 transition-colors">
+                            <CatalogIcon name={tmpl.icon} size={22} />
+                          </span>
+                          <span className="font-syne font-bold text-text1 text-[0.8rem] sm:text-[0.86rem] truncate leading-tight">
+                            {tmpl.title}
+                          </span>
+                        </div>
+                        <p className="text-[0.72rem] sm:text-[0.74rem] text-text2 leading-relaxed line-clamp-2 mb-3 min-h-[2.5rem]">
+                          {tmpl.desc}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {tmpl.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className={`text-[0.62rem] px-2.5 py-1 rounded-full font-semibold border border-black/[0.06] ${getTagColor(tag)}`}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </motion.button>
+                    ))}
+                    <motion.button
+                      type="button"
+                      whileHover={{ y: -2 }}
+                      onClick={() => {
+                        handleScratchCard();
+                        closeLibrary();
+                      }}
+                      className="rounded-2xl border-2 border-dashed border-accent/35 bg-gradient-to-br from-accent-lt via-accent-lt/80 to-violet-100/40 shadow-[0_4px_24px_-10px_rgba(200,98,42,0.2)] flex flex-col items-center justify-center p-5 min-h-[132px] cursor-pointer hover:border-accent/55 transition-all"
+                    >
+                      <div className="w-11 h-11 rounded-full bg-white/90 border border-accent/20 flex items-center justify-center text-accent text-xl font-light mb-2 shadow-sm">
+                        +
+                      </div>
+                      <span className="text-[0.8rem] font-bold text-accent font-syne">{t('agents.build_from_scratch')}</span>
+                      <span className="text-[0.65rem] text-text3 mt-1 text-center max-w-[12rem] leading-snug">
+                        {t('agents.build_scratch_sub')}
+                      </span>
+                    </motion.button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* My Agents — right column on desktop; first on small screens */}
+            <div className="order-1 md:order-2 w-full md:w-[min(288px,30vw)] lg:w-[280px] md:shrink-0 flex flex-col min-h-0 max-h-[min(42vh,360px)] md:max-h-none border-b md:border-b-0 md:border-l border-black/[0.08] bg-white md:shadow-[-8px_0_24px_-12px_rgba(15,23,42,0.08)]">
+              <div className="flex items-center justify-between px-3 sm:px-4 pt-4 sm:pt-5 pb-2.5 sm:pb-3 shrink-0 md:bg-gradient-to-b from-white to-bg2/30">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent2 flex items-center justify-center text-white shadow-md shadow-accent/25">
                     <FiCpu size={18} aria-hidden />
                   </div>
                   <span className="font-syne font-bold text-text1 text-[0.95rem] tracking-tight">{t('agents.my_agents')}</span>
@@ -389,35 +472,37 @@ export default function AgentsView() {
                 <button
                   type="button"
                   onClick={closeLibrary}
-                  className="w-7 h-7 rounded-full border border-black/[0.1] bg-bg flex items-center justify-center text-text2 hover:bg-bg2 cursor-pointer"
+                  className="w-8 h-8 rounded-xl border border-black/[0.08] bg-white flex items-center justify-center text-text2 hover:bg-bg2 hover:border-accent/20 cursor-pointer shadow-sm transition-colors"
                   aria-label="Close"
                 >
                   <FiX size={15} />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-2 sm:px-2.5 pb-2 min-h-0 overscroll-contain">
+              <div className="flex-1 overflow-y-auto px-2.5 sm:px-3 pb-2 min-h-0 overscroll-contain">
                 {userAgentsStatus === 'loading' ? (
-                  <div className="space-y-2 p-1">
+                  <div className="space-y-2.5 p-1">
                     {Array.from({ length: 4 }).map((_, i) => (
-                      <Skeleton key={i} height={56} borderRadius={10} className="w-full" />
+                      <Skeleton key={i} height={64} borderRadius={14} className="w-full" />
                     ))}
                   </div>
                 ) : userAgents.length === 0 ? (
-                  <div className="text-center px-3 py-8 text-text3">
+                  <div
+                    className={`text-center px-3 py-8 mx-1 my-1 ${agentHubCard} border-dashed border-black/[0.12] shadow-none bg-bg2/40`}
+                  >
                     <div className="flex justify-center mb-2 opacity-40 text-text3">
-                      <FiCpu size={36} aria-hidden />
+                      <FiCpu size={34} aria-hidden />
                     </div>
-                    <div className="text-[0.78rem] font-medium text-text2">{t('agents.no_agents_title')}</div>
-                    <div className="text-[0.72rem] mt-1 leading-snug">{t('agents.no_agents_hint')}</div>
+                    <div className="text-[0.78rem] font-semibold text-text2">{t('agents.no_agents_title')}</div>
+                    <div className="text-[0.72rem] mt-1 leading-snug text-text3">{t('agents.no_agents_hint')}</div>
                   </div>
                 ) : (
                   userAgents.map((agent) => (
                     <div
                       key={agent._id}
-                      className={`w-full rounded-lg border px-2.5 py-2 mb-1.5 flex items-center gap-2 transition-all ${
+                      className={`w-full rounded-2xl border px-3 py-2.5 mb-2 flex items-center gap-2 transition-all shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] ${
                         selectedAgentId === agent._id
-                          ? 'border-accent bg-accent-lt shadow-[0_1px_6px_rgba(200,98,42,0.12)]'
-                          : 'border-transparent hover:border-accent/25 hover:bg-accent-lt/50'
+                          ? 'border-accent bg-accent-lt shadow-[0_8px_24px_-8px_rgba(200,98,42,0.22)] ring-1 ring-accent/20'
+                          : 'border-black/[0.07] bg-white hover:border-accent/30 hover:shadow-[0_8px_20px_-10px_rgba(15,23,42,0.12)]'
                       }`}
                     >
                       <button
@@ -425,26 +510,28 @@ export default function AgentsView() {
                         onClick={() => openAgentChat(agent)}
                         className="flex-1 min-w-0 flex items-center gap-2.5 text-left cursor-pointer border-none bg-transparent p-0 font-instrument rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent/40"
                       >
-                            <CatalogIcon
-                              name={models.find((m) => m.id === agent.modelId)?.icon ?? 'FiCpu'}
-                              size={18}
-                              className="shrink-0 text-text1"
-                            />
+                        <div className="shrink-0 w-9 h-9 rounded-xl bg-bg2 border border-black/[0.06] flex items-center justify-center">
+                          <CatalogIcon
+                            name={models.find((m) => m.id === agent.modelId)?.icon ?? 'FiCpu'}
+                            size={18}
+                            className="text-text1"
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[0.8rem] font-semibold text-text1 truncate">{agent.name}</div>
-                          <div className="text-[0.66rem] text-text3 truncate">
+                          <div className="text-[0.65rem] text-text3 truncate">
                             {modelName(agent.modelId)} · {agent.tools?.length ? `${agent.tools.length} tools` : 'No tools'}
                           </div>
                         </div>
                         <span
-                          className={`w-2 h-2 rounded-full shrink-0 ${
+                          className={`w-2 h-2 rounded-full shrink-0 ring-2 ring-white shadow-sm ${
                             agent.status === 'active' ? 'bg-green' : agent.status === 'paused' ? 'bg-text3' : 'bg-amber'
                           }`}
                         />
                       </button>
                       <button
                         type="button"
-                        className="p-1 rounded-md text-text3 hover:text-accent hover:bg-accent/10 cursor-pointer shrink-0"
+                        className="p-1.5 rounded-lg text-text3 hover:text-accent hover:bg-accent/10 cursor-pointer shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           openAgentConfigure(agent);
@@ -455,7 +542,7 @@ export default function AgentsView() {
                       </button>
                       <button
                         type="button"
-                        className="p-1 rounded-md text-text3 hover:text-rose hover:bg-rose/10 cursor-pointer shrink-0"
+                        className="p-1.5 rounded-lg text-text3 hover:text-rose hover:bg-rose/10 cursor-pointer shrink-0"
                         onClick={(e) => deleteAgent(e, agent._id)}
                         aria-label={t('agents.delete_agent')}
                       >
@@ -465,81 +552,18 @@ export default function AgentsView() {
                   ))
                 )}
               </div>
-              <div className="p-3 border-t border-black/[0.08] shrink-0">
+              <div className="p-3 pt-2 border-t border-black/[0.08] shrink-0 bg-gradient-to-t from-bg2/40 to-white">
                 <button
                   type="button"
                   onClick={() => {
                     closeLibrary();
                     dispatch(openBuilder(undefined));
                   }}
-                  className="w-full rounded-full border border-accent/40 bg-accent-lt text-accent text-[0.78rem] font-semibold py-2 hover:bg-accent/10 cursor-pointer font-instrument"
+                  className="w-full rounded-full border border-accent/35 bg-gradient-to-b from-accent-lt to-accent-lt/70 text-accent text-[0.78rem] font-bold py-2.5 hover:border-accent hover:shadow-md shadow-sm cursor-pointer font-instrument transition-all"
                 >
-                      <FiStar size={14} className="inline-block align-middle mr-1" strokeWidth={2.5} aria-hidden />
-                      {t('agents.create_custom')}
+                  <FiStar size={14} className="inline-block align-middle mr-1" strokeWidth={2.5} aria-hidden />
+                  {t('agents.create_custom')}
                 </button>
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col min-w-0 min-h-0">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-3 sm:px-5 md:px-6 py-3 sm:py-4 border-b border-black/[0.08] bg-white shrink-0">
-                <div className="min-w-0">
-                  <div className="font-syne font-bold text-text1 text-[0.95rem] sm:text-[1.02rem] tracking-tight">{t('agents.agent_library')}</div>
-                  <div className="text-[0.7rem] sm:text-[0.72rem] text-text2 mt-0.5 leading-snug">{t('agents.library_sub')}</div>
-                </div>
-                <span className="text-[0.68rem] sm:text-[0.72rem] font-semibold text-accent border border-accent/25 rounded-full px-2.5 sm:px-3 py-1 bg-accent-lt w-fit shrink-0">
-                  {t('agents.default_agents')}
-                </span>
-              </div>
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 min-h-0 overscroll-contain">
-                {templatesPending ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <AgentTemplateSkeleton key={i} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
-                    {tplForGrid.map((tmpl) => (
-                      <motion.button
-                        type="button"
-                        key={tmpl.title}
-                        whileHover={{ y: -2 }}
-                        onClick={() => {
-                          startFromTemplate(tmpl);
-                          closeLibrary();
-                        }}
-                        className="bg-white border border-black/[0.08] rounded-xl p-3 sm:p-3.5 text-left cursor-pointer hover:border-accent/25 hover:shadow-md transition-all min-w-0"
-                      >
-                        <div className="flex items-center gap-2 mb-1.5 min-w-0">
-                          <span className="shrink-0 text-text1 flex items-center justify-center">
-                            <CatalogIcon name={tmpl.icon} size={20} />
-                          </span>
-                          <span className="font-syne font-semibold text-text1 text-[0.78rem] sm:text-[0.82rem] truncate">{tmpl.title}</span>
-                        </div>
-                        <p className="text-[0.7rem] text-text2 leading-relaxed line-clamp-2 mb-2">{tmpl.desc}</p>
-                        <div className="flex flex-wrap gap-1">
-                          {tmpl.tags.slice(0, 3).map((tag) => (
-                            <span key={tag} className={`text-[0.6rem] px-2 py-0.5 rounded-full font-medium ${getTagColor(tag)}`}>
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </motion.button>
-                    ))}
-                    <motion.button
-                      type="button"
-                      whileHover={{ background: 'rgba(200,98,42,0.08)' }}
-                      onClick={() => {
-                        handleScratchCard();
-                        closeLibrary();
-                      }}
-                      className="rounded-xl border-[1.5px] border-dashed border-accent/30 bg-accent-lt flex flex-col items-center justify-center p-4 min-h-[120px] cursor-pointer"
-                    >
-                      <div className="text-2xl mb-1">+</div>
-                      <span className="text-[0.78rem] font-semibold text-accent">Build from Scratch</span>
-                    </motion.button>
-                  </div>
-                )}
               </div>
             </div>
           </div>

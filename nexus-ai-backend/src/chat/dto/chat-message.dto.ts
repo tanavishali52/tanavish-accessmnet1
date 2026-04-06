@@ -6,7 +6,7 @@ import {
   ValidateNested,
   Allow,
 } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { Type, Transform, plainToInstance } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ChatContextDto {
@@ -42,20 +42,30 @@ export class ChatMessageDto {
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => {
     if (value == null || value === '') return undefined;
+    let raw: Record<string, unknown> | undefined;
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      return value;
-    }
-    if (typeof value === 'string') {
+      raw = value as Record<string, unknown>;
+    } else if (typeof value === 'string') {
       try {
         const parsed = JSON.parse(value) as unknown;
-        return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-          ? parsed
-          : undefined;
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          raw = parsed as Record<string, unknown>;
+        }
       } catch {
         return undefined;
       }
     }
-    return undefined;
+    if (!raw) return undefined;
+
+    /** Only whitelisted keys — avoids forbidNonWhitelisted failures on multipart + nested plain objects */
+    const slim: Record<string, string> = {};
+    for (const key of ['goal', 'audience', 'level', 'budget'] as const) {
+      const v = raw[key];
+      if (v != null && typeof v === 'string') slim[key] = v;
+    }
+    if (Object.keys(slim).length === 0) return undefined;
+
+    return plainToInstance(ChatContextDto, slim);
   })
   @ValidateNested()
   @Type(() => ChatContextDto)

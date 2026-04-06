@@ -461,7 +461,7 @@ export default function Hero() {
 
   return (
     <section
-      className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 pt-14 sm:pt-20 pb-10 sm:pb-12 text-center relative overflow-hidden"
+      className="relative flex flex-1 flex-col items-center justify-center overflow-x-hidden px-3 text-center sm:px-6 md:px-8 pt-[max(1rem,calc(4rem+env(safe-area-inset-top,0px)))] sm:pt-20 pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] sm:pb-12"
       style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(200,98,42,0.07) 0%, transparent 70%)' }}
     >
       <div
@@ -484,7 +484,7 @@ export default function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
         className="font-syne font-bold text-text1 leading-[1.05] max-w-[90vw] sm:max-w-[700px] md:max-w-[800px] mb-4 sm:mb-5 relative z-10 px-2"
-        style={{ fontSize: 'clamp(2rem, 7vw, 5.5rem)', letterSpacing: '-0.04em' }}
+        style={{ fontSize: 'clamp(1.65rem, 6vw + 0.4rem, 5.5rem)', letterSpacing: '-0.04em' }}
       >
         <Trans i18nKey="landing.hero_headline">
           Discover, Compare & <span className="text-accent">Deploy</span> AI Models
@@ -508,7 +508,7 @@ export default function Hero() {
         ref={heroSearchRootRef}
       >
         <div
-          className={`bg-white border-[1.5px] rounded-[28px] shadow-md transition-all ${
+          className={`bg-white border-[1.5px] rounded-2xl sm:rounded-[28px] shadow-md transition-all ${
             searchCardActive ? 'border-accent shadow-[0_0_0_4px_rgba(200,98,42,0.1)]' : 'border-black/[0.14]'
           }`}
         >
@@ -532,26 +532,29 @@ export default function Hero() {
               ))}
             </div>
           )}
-          <div className="flex items-center min-h-[52px] sm:min-h-[58px] relative">
-            <FiSearch size={15} className="ml-4 sm:ml-5 text-text3 flex-shrink-0" />
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={(e) => {
-                const v = e.target.value;
-                setQuery(v);
-                if (v.trim()) beginHeroOnboarding();
-              }}
-              onFocus={() => {
-                setFocused(true);
-                beginHeroOnboarding();
-              }}
-              onBlur={() => setFocused(false)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder={t('landing.search_placeholder')}
-              className="flex-1 px-2 sm:px-3 py-3 sm:py-4 text-[0.85rem] sm:text-[0.98rem] bg-transparent outline-none text-text1 placeholder:text-text3 font-instrument min-w-0"
-            />
-            <div className="flex items-center gap-0.5 px-1 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-stretch">
+            <div className="flex min-h-[50px] min-w-0 flex-1 items-center sm:min-h-[58px]">
+              <FiSearch size={15} className="ml-3 shrink-0 text-text3 sm:ml-5" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setQuery(v);
+                  if (v.trim()) beginHeroOnboarding();
+                }}
+                onFocus={() => {
+                  setFocused(true);
+                  beginHeroOnboarding();
+                }}
+                onBlur={() => setFocused(false)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder={t('landing.search_placeholder')}
+                className="min-w-0 flex-1 bg-transparent px-2 py-3 text-[0.84rem] text-text1 outline-none placeholder:text-text3 sm:px-3 sm:py-4 sm:text-[0.98rem] font-instrument"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 border-t border-black/[0.06] px-2 py-2 sm:border-t-0 sm:py-0 sm:pl-1 sm:pr-2">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -573,74 +576,78 @@ export default function Hero() {
                   e.currentTarget.value = '';
                 }}
               />
-              <ToolbarTooltipButton
-                tooltip={t('common.tooltips.voice_record')}
-                onClick={() => {
-                  if (isRecording) stopVoiceRecording();
-                  else void startVoiceRecording();
-                }}
-                className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-all border-none cursor-pointer ${
-                  isRecording
-                    ? 'text-red-600 bg-red-50 animate-pulse'
-                    : 'bg-violet-100/90 text-violet-700 hover:bg-violet-100'
-                }`}
-                aria-label={isRecording ? 'Stop recording' : 'Record voice'}
-              >
-                <FiMic size={17} />
-              </ToolbarTooltipButton>
-              <ToolbarTooltipButton
-                tooltip={t('common.tooltips.attach_file')}
-                onClick={() => fileInputRef.current?.click()}
-                className="w-[34px] h-[34px] rounded-full flex items-center justify-center border-none cursor-pointer bg-amber-50/95 text-amber-900 hover:bg-amber-100 transition-all"
-                aria-label="Attach files"
-              >
-                <FiPaperclip size={17} />
-              </ToolbarTooltipButton>
-              <ToolbarTooltipButton
-                tooltip={t('common.tooltips.attach_image')}
-                onClick={() => imageInputRef.current?.click()}
-                className="hidden sm:inline-flex w-[34px] h-[34px] rounded-full items-center justify-center border-none cursor-pointer bg-sky-50/95 text-sky-800 hover:bg-sky-100 transition-all"
-                aria-label="Attach images"
-              >
-                <FiImage size={17} />
-              </ToolbarTooltipButton>
-              <ToolbarTooltipButton
-                tooltip={t('common.tooltips.voice_typing')}
-                onClick={() => toggleVoiceTyping()}
-                className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-all border-none cursor-pointer ${
-                  voiceTypingActive
-                    ? 'bg-teal-600 text-white shadow-sm'
-                    : 'bg-teal-50 text-teal-800 hover:bg-teal-100'
-                }`}
-                aria-label={voiceTypingActive ? 'Stop voice typing' : 'Voice typing'}
-              >
-                <MdKeyboardVoice size={18} />
-              </ToolbarTooltipButton>
-            </div>
-            <div className="w-px h-5 bg-black/[0.14] mx-1 sm:mx-1.5 flex-shrink-0" />
-            <span className="relative inline-flex group mr-1.5">
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSearch}
-                className="bg-accent text-white flex items-center gap-1 sm:gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-[22px] text-[0.78rem] sm:text-[0.875rem] font-medium hover:bg-accent2 transition-colors border-none cursor-pointer font-instrument whitespace-nowrap"
-                aria-label={t('common.tooltips.search')}
-              >
-                {t('landing.search_button')} <FiArrowRight size={12} />
-              </motion.button>
-              <span
-                role="tooltip"
-                className="pointer-events-auto absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 cursor-default select-none rounded-full bg-neutral-900 px-2.5 py-1 text-[0.7rem] font-semibold leading-tight text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 whitespace-nowrap"
-                onPointerDown={(e) => e.preventDefault()}
-              >
-                {t('common.tooltips.search')}
+              <div className="flex min-w-0 flex-1 touch-pan-x items-center gap-0.5 overflow-x-auto overscroll-x-contain py-0.5 scrollbar-none sm:flex-initial sm:justify-end sm:overflow-visible sm:py-0">
+                <ToolbarTooltipButton
+                  tooltip={t('common.tooltips.voice_record')}
+                  onClick={() => {
+                    if (isRecording) stopVoiceRecording();
+                    else void startVoiceRecording();
+                  }}
+                  className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-none transition-all sm:h-[34px] sm:w-[34px] ${
+                    isRecording
+                      ? 'animate-pulse bg-red-50 text-red-600'
+                      : 'bg-violet-100/90 text-violet-700 hover:bg-violet-100'
+                  }`}
+                  aria-label={isRecording ? 'Stop recording' : 'Record voice'}
+                >
+                  <FiMic size={17} />
+                </ToolbarTooltipButton>
+                <ToolbarTooltipButton
+                  tooltip={t('common.tooltips.attach_file')}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-amber-50/95 text-amber-900 transition-all hover:bg-amber-100 sm:h-[34px] sm:w-[34px]"
+                  aria-label="Attach files"
+                >
+                  <FiPaperclip size={17} />
+                </ToolbarTooltipButton>
+                <ToolbarTooltipButton
+                  tooltip={t('common.tooltips.attach_image')}
+                  onClick={() => imageInputRef.current?.click()}
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-sky-50/95 text-sky-800 transition-all hover:bg-sky-100 sm:h-[34px] sm:w-[34px]"
+                  aria-label="Attach images"
+                >
+                  <FiImage size={17} />
+                </ToolbarTooltipButton>
+                <ToolbarTooltipButton
+                  tooltip={t('common.tooltips.voice_typing')}
+                  onClick={() => toggleVoiceTyping()}
+                  className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-none transition-all sm:h-[34px] sm:w-[34px] ${
+                    voiceTypingActive
+                      ? 'bg-teal-600 text-white shadow-sm'
+                      : 'bg-teal-50 text-teal-800 hover:bg-teal-100'
+                  }`}
+                  aria-label={voiceTypingActive ? 'Stop voice typing' : 'Voice typing'}
+                >
+                  <MdKeyboardVoice size={18} />
+                </ToolbarTooltipButton>
+              </div>
+
+              <div className="hidden h-5 w-px shrink-0 bg-black/[0.14] sm:block" />
+
+              <span className="relative inline-flex shrink-0 group">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSearch}
+                  className="flex cursor-pointer items-center gap-1 rounded-[20px] border-none bg-accent px-3 py-2 text-[0.76rem] font-medium text-white font-instrument hover:bg-accent2 sm:gap-1.5 sm:rounded-[22px] sm:px-5 sm:py-2.5 sm:text-[0.875rem]"
+                  aria-label={t('common.tooltips.search')}
+                >
+                  {t('landing.search_button')} <FiArrowRight size={12} className="shrink-0" />
+                </motion.button>
+                <span
+                  role="tooltip"
+                  className="pointer-events-auto absolute bottom-full left-1/2 z-30 mb-1.5 hidden -translate-x-1/2 cursor-default select-none rounded-full bg-neutral-900 px-2.5 py-1 text-[0.7rem] font-semibold leading-tight text-white opacity-0 shadow-md transition-opacity duration-150 sm:block group-hover:opacity-100 group-focus-within:opacity-100 whitespace-nowrap"
+                  onPointerDown={(e) => e.preventDefault()}
+                >
+                  {t('common.tooltips.search')}
+                </span>
               </span>
-            </span>
+            </div>
           </div>
 
           {heroFlow !== 'idle' && (
-            <div className="rounded-b-[26px] overflow-hidden border-t border-black/[0.06]">
+            <div className="overflow-hidden rounded-b-2xl border-t border-black/[0.06] sm:rounded-b-[26px]">
               <HeroOnboardingPanel
                 phase={heroFlow === 'building' ? 'building' : heroFlow === 'welcome' ? 'welcome' : 'questions'}
                 steps={onboardSteps}
@@ -684,16 +691,18 @@ export default function Hero() {
         {ACTION_GRID.map((a) => (
           <motion.button
             type="button"
-            key={a.label}
+            key={a.icon}
             whileHover={{ y: -2, boxShadow: '0 6px 18px rgba(200,98,42,0.14)' }}
             onClick={() => router.push('/chat')}
-            className={`flex flex-col items-center gap-1 sm:gap-1.5 bg-white border-[1.5px] border-black/[0.14] rounded-lg px-2 sm:px-4 py-3 sm:py-3.5 cursor-pointer transition-all shadow-card hover:bg-accent-lt hover:border-accent font-instrument ${
+            className={`flex min-w-0 w-full flex-col items-center justify-center gap-1 sm:gap-1.5 bg-white border-[1.5px] border-black/[0.14] rounded-lg px-1.5 sm:px-3 py-3 sm:py-3.5 cursor-pointer transition-all shadow-card hover:bg-accent-lt hover:border-accent font-instrument overflow-hidden ${
               a.dashed ? 'border-dashed bg-bg' : ''
             }`}
             style={{ borderRadius: 16 }}
           >
-            <CatalogIcon name={a.icon} size={26} className="text-accent" />
-            <span className="text-[0.62rem] sm:text-[0.76rem] font-semibold text-text1 text-center leading-[1.3]">{a.label}</span>
+            <CatalogIcon name={a.icon} size={26} className="text-accent shrink-0" />
+            <span className="w-full min-w-0 max-w-full text-[0.62rem] sm:text-[0.76rem] font-semibold text-text1 text-center leading-snug break-words whitespace-normal hyphens-auto">
+              {a.label}
+            </span>
           </motion.button>
         ))}
       </motion.div>
@@ -702,7 +711,7 @@ export default function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.6 }}
-        className="grid grid-cols-3 gap-6 sm:gap-12 justify-center relative z-10 w-full max-w-[360px] sm:max-w-none sm:w-auto"
+        className="relative z-10 mx-auto grid w-full min-w-0 max-w-[min(360px,100%)] grid-cols-3 justify-center gap-4 sm:max-w-none sm:w-auto sm:gap-12"
       >
         {[
           { value: '220+', label: t('landing.stats.models') },

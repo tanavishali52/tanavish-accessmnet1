@@ -8,6 +8,8 @@
     "get_started": "Get Started",
     "start": "Start",
     "go_home": "NexusAI",
+    "expand_sidebar": "Expand sidebar",
+    "collapse_sidebar": "Collapse sidebar",
     "tooltips": {
       "voice_record": "Voice recording",
       "voice_typing": "Voice typing",
@@ -22,7 +24,7 @@
     "hero_headline": "Discover, Compare & <1>Deploy</1> AI Models",
     "hero_subtitle": "The AI model hub trusted by 50,000+ developers. Find the perfect model for any task.",
     "search_placeholder": "Search AI models or describe your use case...",
-    "search_button": "Search",
+    "search_button": "Start",
     "chips": {
       "coding": "🧠 Best for coding",
       "vision": "💰 Cheapest vision",
@@ -247,6 +249,8 @@
     "library_sub": "Choose a default agent or build your own",
     "default_agents": "Default Agents",
     "create_custom": "Create Custom Agent",
+    "build_from_scratch": "Build from Scratch",
+    "build_scratch_sub": "Blank canvas — your prompts & tools",
     "no_agents_title": "No agents yet.",
     "no_agents_hint": "Create your first agent to get started!",
     "delete_agent": "Delete",

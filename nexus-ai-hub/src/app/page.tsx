@@ -49,13 +49,15 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="flex flex-col min-h-screen"
+            className="flex min-h-screen flex-col md:flex-row"
             style={{ background: 'var(--bg)' }}
           >
             <Navbar />
-            <Hero />
-            <FeaturedModels />
-            <Footer />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <Hero />
+              <FeaturedModels />
+              <Footer />
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -64,11 +66,11 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="flex flex-col h-screen overflow-hidden"
+            className="flex h-screen flex-col overflow-hidden md:flex-row"
             style={{ background: 'var(--bg)' }}
           >
             <AppNav />
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <AnimatePresence mode="wait">
                 {activeTab === 'chat' && (
                   <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-1 overflow-hidden">
