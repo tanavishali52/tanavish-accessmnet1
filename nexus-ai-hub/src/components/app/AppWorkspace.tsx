@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppNav from '@/components/app/AppNav';
 import ChatView from '@/components/app/chat/ChatView';
@@ -12,10 +13,14 @@ import ModelModal from '@/components/shared/ModelModal';
 import Toast from '@/components/shared/Toast';
 import { ActiveTab, openApp } from '@/store/appSlice';
 import { setSession } from '@/store/authSlice';
+import type { RootState } from '@/store';
 import { apiSession, apiGuest } from '@/lib/api';
 
-export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
+export default function AppWorkspace({ tab, requireMember }: { tab: ActiveTab; requireMember?: boolean }) {
   const dispatch = useDispatch();
+  const router = useRouter();
+  const authUser = useSelector((s: RootState) => s.auth.user);
+  const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
     dispatch(openApp(tab));
@@ -23,8 +28,30 @@ export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
 
   // Restore session from backend cookie on mount, or create guest session
   useEffect(() => {
-    apiSession()
-      .then(({ authenticated, user }) => {
+    let cancelled = false;
+
+    const hydrateSession = async () => {
+      const applyGuest = async () => {
+        try {
+          const guestUser = await apiGuest();
+          if (cancelled) return;
+          dispatch(setSession({
+            id: guestUser.id,
+            name: guestUser.name,
+            email: guestUser.email,
+            avatar: guestUser.name[0]?.toUpperCase() ?? 'G',
+            plan: guestUser.plan,
+            guestMode: true,
+          }));
+        } catch (err) {
+          console.error('Failed to create guest session', err);
+          if (!cancelled) dispatch(setSession(null));
+        }
+      };
+
+      try {
+        const { authenticated, user } = await apiSession();
+        if (cancelled) return;
         if (authenticated && user) {
           dispatch(setSession({
             id: user.id,
@@ -35,44 +62,43 @@ export default function AppWorkspace({ tab }: { tab: ActiveTab }) {
             guestMode: false,
           }));
         } else {
-          // No authenticated user, create guest session
-          apiGuest()
-            .then((guestUser) => {
-              dispatch(setSession({
-                id: guestUser.id,
-                name: guestUser.name,
-                email: guestUser.email,
-                avatar: guestUser.name[0]?.toUpperCase() ?? 'G',
-                plan: guestUser.plan,
-                guestMode: true,
-              }));
-            })
-            .catch((err) => {
-              console.error('Failed to create guest session', err);
-              dispatch(setSession(null));
-            });
+          await applyGuest();
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.warn('Session check failed, trying guest:', err);
-        // If session check fails, try guest mode
-        apiGuest()
-          .then((guestUser) => {
-            dispatch(setSession({
-              id: guestUser.id,
-              name: guestUser.name,
-              email: guestUser.email,
-              avatar: guestUser.name[0]?.toUpperCase() ?? 'G',
-              plan: guestUser.plan,
-              guestMode: true,
-            }));
-          })
-          .catch((err) => {
-            console.error('Failed to create guest session', err);
-            dispatch(setSession(null));
-          });
-      });
+        await applyGuest();
+      } finally {
+        if (!cancelled) setSessionReady(true);
+      }
+    };
+
+    void hydrateSession();
+    return () => {
+      cancelled = true;
+    };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!requireMember || !sessionReady) return;
+    if (!authUser || authUser.guestMode) {
+      router.replace(`/login?next=${encodeURIComponent('/agents')}`);
+    }
+  }, [requireMember, sessionReady, authUser, router]);
+
+  const memberBlocked =
+    requireMember && sessionReady && (!authUser || Boolean(authUser.guestMode));
+
+  if (!sessionReady || memberBlocked) {
+    return (
+      <div
+        className="flex h-screen min-h-[100dvh] w-full items-center justify-center font-instrument text-text2"
+        style={{ background: 'var(--bg)' }}
+      >
+        <div className="h-9 w-9 animate-spin rounded-full border-2 border-black/[0.12] border-t-accent" aria-hidden />
+        <span className="sr-only">Loading</span>
+      </div>
+    );
+  }
 
   return (
     <>
