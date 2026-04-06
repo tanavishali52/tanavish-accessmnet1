@@ -23,7 +23,7 @@ export default function ChatInput() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { obDone, currentModelId, userGoal, userAudience, userLevel, userBudget } = useSelector((s: RootState) => s.chat);
-  const { createNewSession, saveMessageToDb } = useChatPersistence();
+  const { saveMessageToDb } = useChatPersistence();
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
@@ -62,7 +62,7 @@ export default function ChatInput() {
             id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
             name: f.name,
             size: f.size,
-            type: f.mimetype || f.type || 'application/octet-stream',
+            type: f.type || 'application/octet-stream',
           };
           map.set(key, attachment);
           newAttachments.push(attachment);
@@ -210,8 +210,6 @@ export default function ChatInput() {
     const attachmentsSnapshot = [...attachments];
     const userMessageId = `local_${Date.now()}`;
 
-    await createNewSession();
-
     dispatch(addMessage({
       id: userMessageId,
       role: 'user',
@@ -248,12 +246,27 @@ export default function ChatInput() {
       }) as Model[];
       dispatch(setIsTyping(false));
       const aiMessageId = `local_${Date.now() + 1}`;
-      dispatch(addMessage({ id: aiMessageId, role: 'ai', content: reply.text, recs, timestamp: Date.now() + 1 }));
+      const aiAttachments = reply.attachments?.map((a) => ({
+        id: a.id,
+        name: a.name,
+        size: a.size,
+        type: a.type,
+        url: a.url,
+      }));
+      dispatch(addMessage({
+        id: aiMessageId,
+        role: 'ai',
+        content: reply.text,
+        recs,
+        attachments: aiAttachments && aiAttachments.length > 0 ? aiAttachments : undefined,
+        timestamp: Date.now() + 1,
+      }));
       await saveMessageToDb({
         id: aiMessageId,
         role: 'ai',
         content: reply.text,
         recs,
+        attachments: aiAttachments && aiAttachments.length > 0 ? aiAttachments : undefined,
       });
     } catch (error) {
       dispatch(setIsTyping(false));
@@ -261,7 +274,7 @@ export default function ChatInput() {
       const errorMessageId = `local_${Date.now() + 1}`;
       dispatch(addMessage({ id: errorMessageId, role: 'ai', content: 'Sorry, something went wrong. Please try again.', timestamp: Date.now() + 1 }));
     }
-  }, [text, attachments, attachmentFiles, dispatch, obDone, userGoal, userAudience, userLevel, userBudget, catalog, createNewSession, saveMessageToDb]);
+  }, [text, attachments, attachmentFiles, dispatch, obDone, userGoal, userAudience, userLevel, userBudget, catalog, saveMessageToDb]);
 
   return (
     <div className="bg-white border-t border-black/[0.08] flex-shrink-0">

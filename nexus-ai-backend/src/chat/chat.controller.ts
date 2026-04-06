@@ -1,8 +1,9 @@
 import { Body, Controller, Post, Get, Put, Delete, Param, UseInterceptors, UploadedFiles } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiOperation, ApiTags, ApiParam, ApiConsumes } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import type { MulterDiskFile } from '../common/types/multer-disk-file';
+import { chatFilesMulterOptions } from './chat-upload.storage';
 import { ChatMessageDto } from './dto/chat-message.dto';
 import { CreateChatSessionDto, UpdateChatSessionDto, SaveChatMessageDto } from './dto/chat-session.dto';
 
@@ -108,7 +109,7 @@ export class ChatController {
   // ────────────────────────────────────────────────────────────────────
 
   @Post('message')
-  @UseInterceptors(FilesInterceptor('files', 10)) // Allow up to 10 files
+  @UseInterceptors(FilesInterceptor('files', 10, chatFilesMulterOptions()))
   @ApiOperation({
     summary: 'Send a message and receive smart model recommendations',
     description: 'Send a text message with optional file attachments. Files are uploaded as multipart/form-data and stored on the server.'

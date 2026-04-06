@@ -1,5 +1,14 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
+/** Build absolute URL for static files served by the API (e.g. `/uploads/images/photo.png`). */
+export function resolveApiPublicUrl(path: string): string {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const origin = API_BASE.replace(/\/?api\/?$/i, '');
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${origin}${p}`;
+}
+
 interface BackendResponse<T> {
   success: boolean;
   message: string | string[];
@@ -220,6 +229,8 @@ export interface ChatAttachmentType {
   name: string;
   size: number;
   type: string;
+  /** Relative path from API origin, e.g. `/uploads/voice/xyz.webm` */
+  url?: string;
 }
 
 export interface ModelRecommendationType {
@@ -293,12 +304,16 @@ export function apiCreateChatSession(payload: {
   });
 }
 
+function encPath(s: string) {
+  return encodeURIComponent(s);
+}
+
 export function apiGetChatSession(sessionId: string) {
-  return request<ChatSessionRecord>(`/chat/session/${sessionId}`);
+  return request<ChatSessionRecord>(`/chat/session/${encPath(sessionId)}`);
 }
 
 export function apiGetUserChats(userId: string) {
-  return request<ChatSessionRecord[]>(`/chat/sessions/${userId}`);
+  return request<ChatSessionRecord[]>(`/chat/sessions/${encPath(userId)}`);
 }
 
 export function apiUpdateChatSession(sessionId: string, payload: {
@@ -306,20 +321,20 @@ export function apiUpdateChatSession(sessionId: string, payload: {
   context?: ChatContext;
   currentModelId?: string;
 }) {
-  return request<ChatSessionRecord>(`/chat/session/${sessionId}`, {
+  return request<ChatSessionRecord>(`/chat/session/${encPath(sessionId)}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
 }
 
 export function apiDeleteChatSession(sessionId: string) {
-  return request<{ success: boolean }>(`/chat/session/${sessionId}`, {
+  return request<{ success: boolean }>(`/chat/session/${encPath(sessionId)}`, {
     method: 'DELETE',
   });
 }
 
 export function apiDeleteAllUserChats(userId: string) {
-  return request<{ success: boolean }>(`/chat/sessions/${userId}`, {
+  return request<{ success: boolean }>(`/chat/sessions/${encPath(userId)}`, {
     method: 'DELETE',
   });
 }
@@ -334,18 +349,21 @@ export function apiSaveChatMessage(
     attachments?: ChatAttachmentType[];
   },
 ) {
-  return request<ChatMessageRecord>(`/chat/session/${sessionId}/message`, {
+  return request<ChatMessageRecord>(`/chat/session/${encPath(sessionId)}/message`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 }
 
 export function apiGetChatMessages(sessionId: string) {
-  return request<ChatMessageRecord[]>(`/chat/session/${sessionId}/messages`);
+  return request<ChatMessageRecord[]>(`/chat/session/${encPath(sessionId)}/messages`);
 }
 
 export function apiDeleteChatMessage(messageId: string, sessionId: string) {
-  return request<{ success: boolean }>(`/chat/message/${messageId}/${sessionId}`, {
-    method: 'DELETE',
-  });
+  return request<{ success: boolean }>(
+    `/chat/message/${encPath(messageId)}/${encPath(sessionId)}`,
+    {
+      method: 'DELETE',
+    },
+  );
 }

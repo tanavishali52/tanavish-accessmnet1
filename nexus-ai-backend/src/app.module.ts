@@ -18,11 +18,9 @@ import { AgentsModule } from './agents/agents.module';
         process.env.MONGODB_URI ??
         'mongodb://127.0.0.1:27017/nexus-ai-hub',
     ),
-    MulterModule.register({
-      dest: './uploads', // Directory to store uploaded files
-    }),
+    MulterModule.register({}),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
+      rootPath: join(__dirname, '..', 'public', 'uploads'),
       serveRoot: '/uploads',
     }),
     CatalogModule,

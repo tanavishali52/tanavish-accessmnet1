@@ -9,7 +9,7 @@ import {
   setUserGoal, setUserAudience, setUserLevel, setUserBudget, setPendingRecs, setIsTyping,
 } from '@/store/chatSlice';
 import { openModal } from '@/store/modalSlice';
-import { apiChatMessage, Model } from '@/lib/api';
+import { apiChatMessage, resolveApiPublicUrl, Model } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
 
 const getGoalTiles = (t: any) => [
@@ -208,19 +208,54 @@ export default function ChatArea() {
                 {msg.content}
               </div>
               {msg.attachments && msg.attachments.length > 0 && (
-                <div className={`mt-1.5 flex flex-wrap gap-1.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  {msg.attachments.map((file) => (
-                    <div
-                      key={file.id}
-                      className={`px-2.5 py-1.5 rounded-full text-[0.68rem] font-instrument border ${
-                        msg.role === 'user'
-                          ? 'bg-white/15 border-white/25 text-white'
-                          : 'bg-bg border-black/[0.12] text-text2'
-                      }`}
-                    >
-                      {file.name}
-                    </div>
-                  ))}
+                <div className={`mt-1.5 flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-wrap gap-1.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.attachments.map((file) => {
+                      const src = file.url ? resolveApiPublicUrl(file.url) : '';
+                      const isImage = file.type.startsWith('image/') && src;
+                      const isAudio = file.type.startsWith('audio/') && src;
+                      if (isImage) {
+                        return (
+                          <a
+                            key={file.id}
+                            href={src}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block max-w-[220px] rounded-lg overflow-hidden border border-black/[0.12] bg-bg"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt={file.name} className="max-h-40 w-auto object-contain" />
+                          </a>
+                        );
+                      }
+                      if (isAudio) {
+                        return (
+                          <div key={file.id} className="max-w-full rounded-lg border border-black/[0.12] bg-bg p-2">
+                            <div className="text-[0.65rem] text-text3 mb-1 truncate max-w-[240px]">{file.name}</div>
+                            <audio controls src={src} className="w-full max-w-[280px] h-8" preload="metadata" />
+                          </div>
+                        );
+                      }
+                      return (
+                        <div
+                          key={file.id}
+                          className={`px-2.5 py-1.5 rounded-full text-[0.68rem] font-instrument border ${
+                            msg.role === 'user'
+                              ? 'bg-white/15 border-white/25 text-white'
+                              : 'bg-bg border-black/[0.12] text-text2'
+                          }`}
+                        >
+                          {file.url ? (
+                            <a href={resolveApiPublicUrl(file.url)} target="_blank" rel="noopener noreferrer" className="underline">
+                              {file.name}
+                            </a>
+                          ) : (
+                            file.name
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
               {/* Recs */}

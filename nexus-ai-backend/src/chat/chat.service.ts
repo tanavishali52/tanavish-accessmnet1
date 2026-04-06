@@ -6,7 +6,9 @@ import { ChatContextDto } from './dto/chat-message.dto';
 import { ChatSession, ChatSessionDocument } from './schemas/chat-session.schema';
 import { ChatMessage, ChatMessageDocument } from './schemas/chat-message.schema';
 import { CreateChatSessionDto, UpdateChatSessionDto, SaveChatMessageDto } from './dto/chat-session.dto';
+import { relative } from 'node:path';
 import type { MulterDiskFile } from '../common/types/multer-disk-file';
+import { CHAT_UPLOADS_ROOT } from './chat-upload.storage';
 
 type Model = (typeof MODELS)[number];
 
@@ -52,10 +54,18 @@ export class ChatService {
     return session;
   }
 
+  /** Guest chats were historically keyed as `guest_${guestAuthId}` (double prefix). Include both for lookup. */
+  private chatOwnerSessionIds(userId: string): string[] {
+    if (userId.startsWith('guest_')) {
+      return [userId, `guest_${userId}`];
+    }
+    return [userId];
+  }
+
   async getUserSessions(userId: string) {
     return this.sessionModel
-      .find({ sessionId: userId })
-      .select('_id title context currentModelId createdAt updatedAt')
+      .find({ sessionId: { $in: this.chatOwnerSessionIds(userId) } })
+      .select('_id title context currentModelId isGuest createdAt updatedAt')
       .sort({ updatedAt: -1 })
       .lean();
   }
@@ -80,11 +90,12 @@ export class ChatService {
   }
 
   async deleteAllUserSessions(userId: string) {
-    const sessions = await this.sessionModel.find({ sessionId: userId });
+    const owners = this.chatOwnerSessionIds(userId);
+    const sessions = await this.sessionModel.find({ sessionId: { $in: owners } });
     await this.messageModel.deleteMany({
       conversationId: { $in: sessions.map((s) => s._id) },
     });
-    await this.sessionModel.deleteMany({ sessionId: userId });
+    await this.sessionModel.deleteMany({ sessionId: { $in: owners } });
     return { success: true };
   }
 
@@ -187,13 +198,16 @@ export class ChatService {
     // Process uploaded files
     let attachments: { id: string; name: string; size: number; type: string; url?: string }[] = [];
     if (files && files.length > 0) {
-      attachments = files.map((file) => ({
-        id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        name: file.originalname,
-        size: file.size,
-        type: file.mimetype,
-        url: `/uploads/${file.filename}`, // URL to access the file
-      }));
+      attachments = files.map((file) => {
+        const rel = relative(CHAT_UPLOADS_ROOT, file.path).replace(/\\/g, '/');
+        return {
+          id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          name: file.originalname,
+          size: file.size,
+          type: file.mimetype,
+          url: `/uploads/${rel}`,
+        };
+      });
     }
 
     return { text: this.buildText(msg, context), recs: top, attachments };

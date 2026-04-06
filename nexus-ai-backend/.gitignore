@@ -13,6 +13,14 @@ yarn-debug.log*
 # Environment
 .env
 
+# Uploaded media (voice, images, files) — keep folders, not binaries
+public/uploads/voice/*
+!public/uploads/voice/.gitkeep
+public/uploads/images/*
+!public/uploads/images/.gitkeep
+public/uploads/files/*
+!public/uploads/files/.gitkeep
+
 # Misc
 .DS_Store
 .vscode/

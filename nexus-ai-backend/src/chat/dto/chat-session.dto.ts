@@ -9,9 +9,10 @@ export class CreateChatSessionDto {
   @IsString()
   title?: string;
 
-  @ApiProperty({ example: 'user_123' })
+  @ApiProperty({ example: 'user_123 or guest_<uuid>' })
   @IsString()
-  sessionId: string; // user ID or guest session ID
+  /** Stable owner id: logged-in user’s id, or guest’s auth id (`guest_<uuid>`). Chat rows use `isGuest` to distinguish. */
+  sessionId: string;
 
   @ApiProperty({ example: false })
   @IsBoolean()

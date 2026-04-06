@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import {
@@ -11,6 +11,8 @@ import {
   setMessages,
   addSession,
   markMessageSaved,
+  setObDone,
+  setOnboardPhase,
 } from '@/store/chatSlice';
 import {
   apiCreateChatSession,
@@ -18,13 +20,13 @@ import {
   apiGetUserChats,
   apiGetChatSession,
   apiUpdateChatSession,
-  ChatSessionRecord,
   ChatMessageRecord,
   ChatContext,
   ChatAttachmentType,
   ModelRecommendationType,
   Model,
 } from '@/lib/api';
+import { CHAT_SESSION_STORAGE_KEY } from '@/lib/chatStorageKeys';
 
 interface UseChatPersistenceOptions {
   autoSave?: boolean;
@@ -40,7 +42,8 @@ export function useChatPersistence({ autoSave = true, autoLoadSessions = true }:
   const { currentSessionId, messages, hasUnsavedChanges, userGoal, userAudience, userLevel, userBudget, currentModelId } = useSelector((s: RootState) => s.chat);
   const { user } = useSelector((s: RootState) => s.auth);
 
-  const userId = user?.guestMode ? `guest_${user.id}` : user?.id ?? null;
+  /** Same id as auth (guest: `guest_<uuid>`, logged-in: Mongo user id). Used as chat `sessionId` in DB. */
+  const userId = user?.id ?? null;
   const isGuest = user?.guestMode ?? false;
 
   // ────────────────────────────────────────────────────────────────────
@@ -115,6 +118,10 @@ export function useChatPersistence({ autoSave = true, autoLoadSessions = true }:
 
         dispatch(setMessages(formattedMessages));
         dispatch(setHasUnsavedChanges(false));
+        if (formattedMessages.length > 0) {
+          dispatch(setOnboardPhase('chat'));
+          dispatch(setObDone(true));
+        }
       } catch (error) {
         console.error('Failed to load session:', error);
         throw error;
@@ -142,17 +149,29 @@ export function useChatPersistence({ autoSave = true, autoLoadSessions = true }:
         ),
       );
 
-      // Auto-load the most recent session if no current session is set
-      if (sessions.length > 0 && !currentSessionId) {
-        const mostRecentSession = sessions.sort((a, b) => 
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        )[0];
-        await loadSession(mostRecentSession._id);
+      if (sessions.length === 0) return;
+
+      const preferred =
+        typeof window !== 'undefined' ? window.localStorage.getItem(CHAT_SESSION_STORAGE_KEY) : null;
+      const preferredOk = preferred && sessions.some((s) => s._id === preferred);
+
+      if (preferredOk && preferred) {
+        await loadSession(preferred);
+        return;
       }
+
+      if (preferred && !preferredOk) {
+        window.localStorage.removeItem(CHAT_SESSION_STORAGE_KEY);
+      }
+
+      const mostRecentSession = [...sessions].sort(
+        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      )[0];
+      await loadSession(mostRecentSession._id);
     } catch (error) {
       console.error('Failed to load user sessions:', error);
     }
-  }, [userId, dispatch, currentSessionId, loadSession]);
+  }, [userId, dispatch, loadSession]);
 
   const updateSessionMetadata = useCallback(
     async (sessionId: string, title?: string) => {
@@ -246,10 +265,17 @@ export function useChatPersistence({ autoSave = true, autoLoadSessions = true }:
   // Auto-load Sessions on Mount
   // ────────────────────────────────────────────────────────────────────
 
+  const lastLoadedUserId = useRef<string | null>(null);
+
   useEffect(() => {
-    if (autoLoadSessions && userId) {
-      loadUserSessions();
+    if (!autoLoadSessions) return;
+    if (!userId) {
+      lastLoadedUserId.current = null;
+      return;
     }
+    if (lastLoadedUserId.current === userId) return;
+    lastLoadedUserId.current = userId;
+    void loadUserSessions();
   }, [autoLoadSessions, userId, loadUserSessions]);
 
   return {
