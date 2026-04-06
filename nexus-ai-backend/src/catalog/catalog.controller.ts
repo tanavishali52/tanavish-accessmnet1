@@ -28,6 +28,13 @@ export class CatalogController {
     return this.catalogService.getAgents();
   }
 
+  @Get('hero-onboarding')
+  @ApiOperation({ summary: 'Get landing hero guided onboarding steps' })
+  @ApiOkResponse({ description: 'Ordered questions and options for the home hero setup flow' })
+  getHeroOnboarding() {
+    return this.catalogService.getHeroOnboarding();
+  }
+
   @Get('research')
   @ApiOperation({ summary: 'Get research feed' })
   @ApiOkResponse({ description: 'List of research items from frontend data' })

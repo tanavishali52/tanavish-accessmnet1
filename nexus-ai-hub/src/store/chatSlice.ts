@@ -33,6 +33,8 @@ interface ChatState {
   currentSessionId: string | null; // Current active session
   sessions: ChatSession[]; // List of user's sessions
   messages: ChatMessage[];
+  /** Set by landing hero guided flow; ChatInput consumes once to send + fetch AI reply. */
+  pendingAutoMessage: string | null;
   onboardPhase: OnboardPhase;
   obDone: boolean;
   userGoal: string;
@@ -50,6 +52,7 @@ const initialState: ChatState = {
   currentSessionId: null,
   sessions: [],
   messages: [],
+  pendingAutoMessage: null,
   onboardPhase: 'start',
   obDone: false,
   userGoal: '',
@@ -99,6 +102,9 @@ const chatSlice = createSlice({
     setMessages(state, action: PayloadAction<ChatMessage[]>) {
       state.messages = action.payload;
       state.hasUnsavedChanges = false;
+    },
+    setPendingAutoMessage(state, action: PayloadAction<string | null>) {
+      state.pendingAutoMessage = action.payload;
     },
     markMessageSaved(state, action: PayloadAction<{ id: string; savedId: string }>) {
       const index = state.messages.findIndex((m) => m.id === action.payload.id);
@@ -163,6 +169,7 @@ export const {
   removeSession,
   addMessage,
   setMessages,
+  setPendingAutoMessage,
   markMessageSaved,
   setOnboardPhase,
   setObDone,

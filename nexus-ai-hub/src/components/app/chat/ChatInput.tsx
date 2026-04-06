@@ -3,7 +3,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { addMessage, setIsTyping, setOnboardPhase, setObDone, ChatAttachment } from '@/store/chatSlice';
+import {
+  addMessage,
+  setIsTyping,
+  setOnboardPhase,
+  setObDone,
+  setPendingAutoMessage,
+  ChatAttachment,
+} from '@/store/chatSlice';
 import { showToast } from '@/store/appSlice';
 import { motion } from 'framer-motion';
 import { apiChatMessage, Model } from '@/lib/api';
@@ -22,7 +29,9 @@ const getCategoryTabs = (t: any) => [
 export default function ChatInput() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const { obDone, currentModelId, userGoal, userAudience, userLevel, userBudget } = useSelector((s: RootState) => s.chat);
+  const { obDone, currentModelId, userGoal, userAudience, userLevel, userBudget, pendingAutoMessage } = useSelector(
+    (s: RootState) => s.chat,
+  );
   const { saveMessageToDb } = useChatPersistence();
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -202,12 +211,15 @@ export default function ChatInput() {
     };
   }, [isRecording]);
 
-  const handleSend = useCallback(async () => {
-    const tVal = text.trim();
-    if (!tVal && attachments.length === 0) return;
-    const payloadText = tVal || `Attached ${attachments.length} file${attachments.length > 1 ? 's' : ''}`;
-    const filesSnapshot = [...attachmentFiles];
-    const attachmentsSnapshot = [...attachments];
+  const handleSend = useCallback(async (textOverride?: string) => {
+    const fromOverride = textOverride !== undefined;
+    const tVal = (fromOverride ? textOverride : text).trim();
+    const attachSnap = fromOverride ? [] : [...attachments];
+    const filesSnap = fromOverride ? [] : [...attachmentFiles];
+    if (!tVal && attachSnap.length === 0) return;
+    const payloadText = tVal || `Attached ${attachSnap.length} file${attachSnap.length > 1 ? 's' : ''}`;
+    const filesSnapshot = filesSnap;
+    const attachmentsSnapshot = attachSnap;
     const userMessageId = `local_${Date.now()}`;
 
     dispatch(addMessage({
@@ -276,6 +288,13 @@ export default function ChatInput() {
     }
   }, [text, attachments, attachmentFiles, dispatch, obDone, userGoal, userAudience, userLevel, userBudget, catalog, saveMessageToDb]);
 
+  useEffect(() => {
+    if (!pendingAutoMessage?.trim()) return;
+    const msg = pendingAutoMessage.trim();
+    dispatch(setPendingAutoMessage(null));
+    void handleSend(msg);
+  }, [pendingAutoMessage, dispatch, handleSend]);
+
   return (
     <div className="bg-white border-t border-black/[0.08] flex-shrink-0">
       {/* Category Prompt Panel */}
@@ -342,7 +361,7 @@ export default function ChatInput() {
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSend(); } }}
             placeholder={t('chat.area.placeholder')}
             rows={1}
             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-[0.82rem] sm:text-[0.875rem] bg-transparent border-none outline-none resize-none text-text1 placeholder:text-text3 font-instrument"
@@ -399,7 +418,7 @@ export default function ChatInput() {
         </div>
         <motion.button
           whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
-          onClick={handleSend}
+          onClick={() => void handleSend()}
           className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent2 transition-colors border-none cursor-pointer flex-shrink-0"
         >
           <FiSend size={15} />

@@ -1,9 +1,11 @@
 'use client';
 
+import { useMemo, useState, type ComponentType } from 'react';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { FiClock, FiBookOpen } from 'react-icons/fi';
+import { FiClock, FiBookOpen, FiGlobe, FiShield, FiZap, FiUnlock } from 'react-icons/fi';
+import { GiBrain } from 'react-icons/gi';
 import Skeleton from '@/components/shared/Skeleton';
 import { useRouter } from 'next/navigation';
 
@@ -17,6 +19,22 @@ const ORG_COLORS: Record<string, string> = {
   'OpenAI':          'bg-blue-lt text-blue',
   'Mistral AI':      'bg-teal-lt text-teal',
 };
+
+type ResearchFilterKey = 'all' | string;
+
+const RESEARCH_CATEGORY_FILTERS: {
+  key: ResearchFilterKey;
+  label: string;
+  Icon?: ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
+  iconClass?: string;
+}[] = [
+  { key: 'all', label: 'All' },
+  { key: 'REASONING', label: 'Reasoning', Icon: GiBrain, iconClass: 'text-[#D946A6]' },
+  { key: 'MULTIMODAL', label: 'Multimodal', Icon: FiGlobe, iconClass: 'text-blue' },
+  { key: 'ALIGNMENT', label: 'Alignment', Icon: FiShield, iconClass: 'text-blue' },
+  { key: 'EVALUATION', label: 'Efficiency', Icon: FiZap, iconClass: 'text-accent' },
+  { key: 'OPEN WEIGHTS', label: 'Open Weights', Icon: FiUnlock, iconClass: 'text-amber' },
+];
 
 function ResearchItemSkeleton() {
   return (
@@ -43,6 +61,12 @@ function ResearchItemSkeleton() {
 export default function ResearchView() {
   const router = useRouter();
   const { research, status } = useSelector((s: RootState) => s.models);
+  const [categoryFilter, setCategoryFilter] = useState<ResearchFilterKey>('all');
+
+  const visibleResearch = useMemo(() => {
+    if (categoryFilter === 'all') return research;
+    return research.filter((item) => item.category === categoryFilter);
+  }, [research, categoryFilter]);
 
   return (
     <div className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8 bg-bg">
@@ -61,14 +85,49 @@ export default function ResearchView() {
           </div>
         </div>
 
+        {/* Category filters */}
+        <div className="mb-4 sm:mb-5 -mx-1 px-1">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {RESEARCH_CATEGORY_FILTERS.map(({ key, label, Icon, iconClass }) => {
+              const active = categoryFilter === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setCategoryFilter(key)}
+                  className={[
+                    'flex items-center gap-1.5 flex-shrink-0 rounded-full px-3.5 py-2 text-[0.72rem] sm:text-[0.75rem] font-semibold font-instrument border transition-colors',
+                    active
+                      ? 'bg-text1 text-white border-text1 shadow-sm'
+                      : 'bg-white text-blue border-black/[0.12] hover:border-black/[0.18] hover:bg-bg2/60',
+                  ].join(' ')}
+                >
+                  {Icon ? (
+                    Icon === GiBrain ? (
+                      <GiBrain className={iconClass} size={14} />
+                    ) : (
+                      <Icon className={iconClass} size={14} strokeWidth={2} />
+                    )
+                  ) : null}
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Feed */}
         <div className="flex flex-col gap-3 sm:gap-4">
           {status === 'loading' ? (
             Array.from({ length: 4 }).map((_, i) => (
               <ResearchItemSkeleton key={i} />
             ))
+          ) : visibleResearch.length === 0 ? (
+            <p className="text-[0.85rem] text-text2 text-center py-10 bg-white border border-black/[0.08] rounded-2xl">
+              No items in this category yet.
+            </p>
           ) : (
-            research.map((item, i) => {
+            visibleResearch.map((item, i) => {
               const [month, day] = item.date.split(' ');
               const orgColor = ORG_COLORS[item.org] || 'bg-bg2 text-text2';
               return (

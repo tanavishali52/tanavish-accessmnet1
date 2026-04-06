@@ -124,6 +124,7 @@ export interface ResearchItem {
   org: string;
   title: string;
   summary: string;
+  category: string;
 }
 
 export interface ResearchDetail extends ResearchItem {
@@ -149,6 +150,18 @@ export function apiAgents() {
 
 export function apiLabs() {
   return request<Lab[]>('/catalog/labs');
+}
+
+export interface HeroOnboardStepDto {
+  k: string;
+  q: string;
+  hint: string;
+  /** react-icons/fi name, e.g. `FiZap` — resolved in the hub via `HERO_ONBOARD_ICONS`. */
+  opts: { icon: string; l: string; sub: string }[];
+}
+
+export function apiHeroOnboarding() {
+  return request<HeroOnboardStepDto[]>('/catalog/hero-onboarding');
 }
 
 export function apiResearch() {

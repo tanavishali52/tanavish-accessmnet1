@@ -1,13 +1,25 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useDispatch } from 'react-redux';
-import { addMessage, setOnboardPhase, setObDone, ChatAttachment } from '@/store/chatSlice';
+import {
+  addMessage,
+  setOnboardPhase,
+  setObDone,
+  setPendingAutoMessage,
+  setUserGoal,
+  setUserAudience,
+  setUserLevel,
+  ChatAttachment,
+} from '@/store/chatSlice';
 import { showToast } from '@/store/appSlice';
 import { FiSearch, FiMic, FiArrowRight, FiUpload } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 import { useTranslation, Trans } from 'react-i18next';
+import HeroOnboardingPanel from '@/components/landing/HeroOnboardingPanel';
+import { buildHeroOnboardingPrompt } from '@/components/landing/heroOnboardingSteps';
+import { apiHeroOnboarding, type HeroOnboardStepDto } from '@/lib/api';
 
 const getQuickChips = (t: any) => [
   t('landing.chips.coding'),
@@ -26,6 +38,9 @@ const getActionGrid = (t: any) => [
   { icon: '✦', label: t('landing.actions.explore'), dashed: true },
 ];
 
+type HeroFlow = 'idle' | 'welcome' | 'questions' | 'building';
+type OnboardLoadStatus = 'loading' | 'ready' | 'error';
+
 export default function Hero() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -34,29 +49,185 @@ export default function Hero() {
   const [focused, setFocused] = useState(false);
   const [micActive, setMicActive] = useState(false);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [heroFlow, setHeroFlow] = useState<HeroFlow>('idle');
+  const [heroStep, setHeroStep] = useState(0);
+  const [heroAnswers, setHeroAnswers] = useState<Partial<Record<string, string>>>({});
+  const [welcomeProgress, setWelcomeProgress] = useState(0);
+  const [onboardSteps, setOnboardSteps] = useState<HeroOnboardStepDto[]>([]);
+  const [onboardStatus, setOnboardStatus] = useState<OnboardLoadStatus>('loading');
+  const [deferWelcomeOpen, setDeferWelcomeOpen] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+  const heroSearchRootRef = useRef<HTMLDivElement>(null);
 
   const QUICK_CHIPS = getQuickChips(t);
   const ACTION_GRID = getActionGrid(t);
 
-  const handleSearch = () => {
+  useEffect(() => {
+    let cancelled = false;
+    setOnboardStatus('loading');
+    apiHeroOnboarding()
+      .then((steps) => {
+        if (cancelled) return;
+        setOnboardSteps(steps);
+        setOnboardStatus('ready');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setOnboardSteps([]);
+        setOnboardStatus('error');
+        dispatch(showToast('Could not load guided setup. You can still search as usual.'));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (onboardStatus !== 'ready' || !deferWelcomeOpen) return;
+    setHeroFlow((f) => (f === 'idle' ? 'welcome' : f));
+    setDeferWelcomeOpen(false);
+  }, [onboardStatus, deferWelcomeOpen]);
+
+  const resetHeroOnboardingUi = useCallback(() => {
+    setHeroFlow('idle');
+    setHeroStep(0);
+    setHeroAnswers({});
+    setWelcomeProgress(0);
+  }, []);
+
+  const goToChatWithCurrentQuery = useCallback(() => {
     if (query.trim() || attachments.length > 0) {
-      dispatch(addMessage({
-        id: Date.now().toString(),
-        role: 'user',
-        content: query.trim() || `Attached ${attachments.length} file${attachments.length > 1 ? 's' : ''}`,
-        attachments: attachments.length > 0 ? attachments : undefined,
-        timestamp: Date.now()
-      }));
+      dispatch(
+        addMessage({
+          id: Date.now().toString(),
+          role: 'user',
+          content: query.trim() || `Attached ${attachments.length} file${attachments.length > 1 ? 's' : ''}`,
+          attachments: attachments.length > 0 ? attachments : undefined,
+          timestamp: Date.now(),
+        }),
+      );
+      dispatch(setPendingAutoMessage(null));
       dispatch(setOnboardPhase('chat'));
       dispatch(setObDone(true));
       setQuery('');
       setAttachments([]);
     }
     router.push('/chat');
+  }, [query, attachments, dispatch, router]);
+
+  const skipWelcomeDirect = useCallback(() => {
+    resetHeroOnboardingUi();
+    goToChatWithCurrentQuery();
+  }, [resetHeroOnboardingUi, goToChatWithCurrentQuery]);
+
+  const handleSearch = () => {
+    if (heroFlow === 'welcome' || heroFlow === 'questions') {
+      skipWelcomeDirect();
+      return;
+    }
+    goToChatWithCurrentQuery();
   };
+
+  const finishWithAnswers = useCallback(
+    (answers: Partial<Record<string, string>>) => {
+      setHeroFlow('building');
+      const prompt = buildHeroOnboardingPrompt(answers, query);
+      dispatch(setUserGoal(answers.task || ''));
+      dispatch(setUserAudience(answers.audience || ''));
+      dispatch(setUserLevel(answers.experience || ''));
+      window.setTimeout(() => {
+        dispatch(setPendingAutoMessage(prompt));
+        dispatch(setOnboardPhase('chat'));
+        dispatch(setObDone(true));
+        setQuery('');
+        setAttachments([]);
+        resetHeroOnboardingUi();
+        router.push('/chat');
+      }, 1200);
+    },
+    [query, dispatch, resetHeroOnboardingUi, router],
+  );
+
+  const goToQuestions = useCallback(() => {
+    if (onboardSteps.length === 0) {
+      finishWithAnswers({});
+      return;
+    }
+    setHeroFlow('questions');
+    setHeroStep(0);
+    setHeroAnswers({});
+  }, [onboardSteps.length, finishWithAnswers]);
+
+  const onPickAnswer = useCallback(
+    (key: string, label: string) => {
+      const merged = { ...heroAnswers, [key]: label };
+      setHeroAnswers(merged);
+      const next = heroStep + 1;
+      if (next >= onboardSteps.length) {
+        finishWithAnswers(merged);
+      } else {
+        setHeroStep(next);
+      }
+    },
+    [heroAnswers, heroStep, onboardSteps.length, finishWithAnswers],
+  );
+
+  const onSkipQuestion = useCallback(() => {
+    const next = heroStep + 1;
+    if (next >= onboardSteps.length) {
+      finishWithAnswers(heroAnswers);
+    } else {
+      setHeroStep(next);
+    }
+  }, [heroStep, heroAnswers, onboardSteps.length, finishWithAnswers]);
+
+  const beginHeroOnboarding = useCallback(() => {
+    if (onboardStatus === 'error') return;
+    if (onboardStatus === 'loading') {
+      setDeferWelcomeOpen(true);
+      return;
+    }
+    setHeroFlow((f) => (f === 'idle' ? 'welcome' : f));
+  }, [onboardStatus]);
+
+  useEffect(() => {
+    if (heroFlow !== 'welcome' || onboardStatus !== 'ready') return;
+    setWelcomeProgress(0);
+    const TOTAL_MS = 6000;
+    const t0 = Date.now();
+    const nSteps = onboardSteps.length;
+    const id = window.setInterval(() => {
+      const elapsed = Date.now() - t0;
+      const p = Math.min(100, (elapsed / TOTAL_MS) * 100);
+      setWelcomeProgress(p);
+      if (elapsed >= TOTAL_MS) {
+        window.clearInterval(id);
+        if (nSteps === 0) {
+          finishWithAnswers({});
+        } else {
+          setHeroFlow('questions');
+          setHeroStep(0);
+          setHeroAnswers({});
+        }
+      }
+    }, 80);
+    return () => window.clearInterval(id);
+  }, [heroFlow, onboardStatus, onboardSteps.length, finishWithAnswers]);
+
+  useEffect(() => {
+    const onDocDown = (e: MouseEvent) => {
+      const root = heroSearchRootRef.current;
+      if (!root || heroFlow === 'idle') return;
+      if (!root.contains(e.target as Node)) {
+        resetHeroOnboardingUi();
+      }
+    };
+    document.addEventListener('mousedown', onDocDown);
+    return () => document.removeEventListener('mousedown', onDocDown);
+  }, [heroFlow, resetHeroOnboardingUi]);
 
   const startVoiceInput = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -87,17 +258,17 @@ export default function Hero() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const picked = Array.from(files);
-    if (picked.some(f => f.size > 10 * 1024 * 1024)) {
+    if (picked.some((f) => f.size > 10 * 1024 * 1024)) {
       dispatch(showToast('One or more files are too large (max 10MB).'));
       return;
     }
-    const newAttachs: ChatAttachment[] = picked.map(f => ({
+    const newAttachs: ChatAttachment[] = picked.map((f) => ({
       id: Math.random().toString(36).slice(2),
       name: f.name,
       size: f.size,
-      type: f.type || 'application/octet-stream'
+      type: f.type || 'application/octet-stream',
     }));
-    setAttachments(prev => [...prev, ...newAttachs]);
+    setAttachments((prev) => [...prev, ...newAttachs]);
     dispatch(showToast(`${picked.length} file(s) attached.`));
   };
 
@@ -109,18 +280,18 @@ export default function Hero() {
     router.push('/chat');
   };
 
+  const searchCardActive = focused || heroFlow !== 'idle';
+
   return (
     <section
       className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 pt-14 sm:pt-20 pb-10 sm:pb-12 text-center relative overflow-hidden"
       style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(200,98,42,0.07) 0%, transparent 70%)' }}
     >
-      {/* Dot grid */}
       <div
         className="absolute inset-0 pointer-events-none opacity-35"
         style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.14) 1px, transparent 1px)', backgroundSize: '28px 28px' }}
       />
 
-      {/* Eyebrow */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -131,7 +302,6 @@ export default function Hero() {
         220+ AI models · Updated weekly
       </motion.div>
 
-      {/* Headline */}
       <motion.h1
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -153,16 +323,16 @@ export default function Hero() {
         {t('landing.hero_subtitle')}
       </motion.p>
 
-      {/* Search bar */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
         className="w-full max-w-[95vw] sm:max-w-[680px] relative z-10 mb-4 sm:mb-5 px-2 sm:px-0"
+        ref={heroSearchRootRef}
       >
         <div
-          className={`bg-white border-[1.5px] rounded-[28px] shadow-md transition-all ${
-            focused ? 'border-accent shadow-[0_0_0_4px_rgba(200,98,42,0.1)]' : 'border-black/[0.14]'
+          className={`bg-white border-[1.5px] rounded-[28px] shadow-md transition-all overflow-hidden ${
+            searchCardActive ? 'border-accent shadow-[0_0_0_4px_rgba(200,98,42,0.1)]' : 'border-black/[0.14]'
           }`}
         >
           <div className="flex items-center min-h-[52px] sm:min-h-[58px] relative">
@@ -177,29 +347,31 @@ export default function Hero() {
             <input
               ref={inputRef}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => setFocused(true)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setQuery(v);
+                if (v.trim()) beginHeroOnboarding();
+              }}
+              onFocus={() => {
+                setFocused(true);
+                beginHeroOnboarding();
+              }}
               onBlur={() => setFocused(false)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               placeholder={t('landing.search_placeholder')}
               className="flex-1 px-2 sm:px-3 py-3 sm:py-4 text-[0.85rem] sm:text-[0.98rem] bg-transparent outline-none text-text1 placeholder:text-text3 font-instrument min-w-0"
             />
-            {/* Hide icons on small screens */}
             <div className="hidden sm:flex items-center gap-0.5 px-1.5 flex-shrink-0">
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={handleFileChange}
-              />
+              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
               <button
+                type="button"
                 onClick={startVoiceInput}
                 className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-all ${micActive ? 'text-accent bg-accent-lt animate-pulse' : 'text-text3 hover:bg-bg2 hover:text-text1'}`}
               >
                 <FiMic size={17} />
               </button>
               <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-text3 hover:bg-bg2 hover:text-text1 transition-all"
               >
@@ -208,6 +380,7 @@ export default function Hero() {
             </div>
             <div className="hidden sm:block w-px h-5 bg-black/[0.14] mx-1.5" />
             <motion.button
+              type="button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSearch}
@@ -216,10 +389,23 @@ export default function Hero() {
               {t('landing.search_button')} <FiArrowRight size={12} />
             </motion.button>
           </div>
+
+          {heroFlow !== 'idle' && (
+            <HeroOnboardingPanel
+              phase={heroFlow === 'building' ? 'building' : heroFlow === 'welcome' ? 'welcome' : 'questions'}
+              steps={onboardSteps}
+              stepIndex={heroStep}
+              answers={heroAnswers}
+              welcomeProgress={welcomeProgress}
+              onStartQuestions={goToQuestions}
+              onSkipWelcomeDirect={skipWelcomeDirect}
+              onPick={onPickAnswer}
+              onSkipQuestion={onSkipQuestion}
+            />
+          )}
         </div>
       </motion.div>
 
-      {/* Quick chips */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -228,6 +414,7 @@ export default function Hero() {
       >
         {QUICK_CHIPS.map((chip) => (
           <button
+            type="button"
             key={chip}
             onClick={() => handleChip(chip)}
             className="bg-white border border-black/[0.14] rounded-full px-3 sm:px-4 py-1.5 text-[0.73rem] sm:text-[0.8rem] text-text2 cursor-pointer shadow-card hover:bg-accent-lt hover:border-accent hover:text-accent transition-all font-instrument"
@@ -237,7 +424,6 @@ export default function Hero() {
         ))}
       </motion.div>
 
-      {/* Action grid — 3 cols on mobile, 6 cols on desktop */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -246,6 +432,7 @@ export default function Hero() {
       >
         {ACTION_GRID.map((a) => (
           <motion.button
+            type="button"
             key={a.label}
             whileHover={{ y: -2, boxShadow: '0 6px 18px rgba(200,98,42,0.14)' }}
             onClick={() => router.push('/chat')}
@@ -260,7 +447,6 @@ export default function Hero() {
         ))}
       </motion.div>
 
-      {/* Stats — responsive gap */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
