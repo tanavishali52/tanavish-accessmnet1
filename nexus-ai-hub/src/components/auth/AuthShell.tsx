@@ -21,12 +21,13 @@ export default function AuthShell({ mode }: { mode: Mode }) {
   const searchParams = useSearchParams();
   const nextHref = safeNext(searchParams.get('next'));
 
-  const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
+  const user = useSelector((s: RootState) => s.auth.user);
+  const isMember = Boolean(user && !user.guestMode);
 
   useEffect(() => {
-    // If already logged in, don’t show auth screens.
-    if (isAuthenticated) router.replace(nextHref);
-  }, [isAuthenticated, nextHref, router]);
+    // Real account only — guests may open login to sign in.
+    if (isMember) router.replace(nextHref);
+  }, [isMember, nextHref, router]);
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--bg)' }}>

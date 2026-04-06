@@ -20,6 +20,13 @@ export class Agent {
   @Prop({ type: [String], default: [] })
   tools: string[];
 
+  /** Conversation memory: none | short_term (session) | short_and_long_term (vector store). */
+  @Prop({
+    enum: ['none', 'short_term', 'short_and_long_term'],
+    default: 'short_term',
+  })
+  memoryMode: string;
+
   @Prop({ enum: ['draft', 'active', 'paused'], default: 'draft' })
   status: string;
 

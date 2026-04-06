@@ -30,6 +30,14 @@ export class CreateAgentDto {
   @IsString({ each: true })
   tools?: string[];
 
+  @ApiPropertyOptional({
+    enum: ['none', 'short_term', 'short_and_long_term'],
+    description: 'Memory scope: stateless, session-only, or session + long-term vector store.',
+  })
+  @IsOptional()
+  @IsIn(['none', 'short_term', 'short_and_long_term'])
+  memoryMode?: string;
+
   @ApiPropertyOptional({ enum: ['draft', 'active', 'paused'] })
   @IsOptional()
   @IsIn(['draft', 'active', 'paused'])
@@ -67,6 +75,11 @@ export class UpdateAgentDto {
   @IsString({ each: true })
   tools?: string[];
 
+  @ApiPropertyOptional({ enum: ['none', 'short_term', 'short_and_long_term'] })
+  @IsOptional()
+  @IsIn(['none', 'short_term', 'short_and_long_term'])
+  memoryMode?: string;
+
   @ApiPropertyOptional({ enum: ['draft', 'active', 'paused'] })
   @IsOptional()
   @IsIn(['draft', 'active', 'paused'])
@@ -74,9 +87,12 @@ export class UpdateAgentDto {
 }
 
 export class RunAgentDto {
-  @ApiProperty({ example: 'Research the latest AI trends and write a summary.' })
+  @ApiProperty({
+    example: 'Research the latest AI trends and write a summary.',
+    description: 'User message; may include inlined attachment excerpts from the client.',
+  })
   @IsString()
   @MinLength(1)
-  @MaxLength(2000)
+  @MaxLength(32000)
   message: string;
 }

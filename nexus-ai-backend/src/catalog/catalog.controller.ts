@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 
@@ -28,10 +28,31 @@ export class CatalogController {
     return this.catalogService.getAgents();
   }
 
+  @Get('agent-explore')
+  @ApiOperation({ summary: 'Get agent hub explore tabs, prompts, and use-case apps' })
+  @ApiOkResponse({ description: 'Structured content for the Agents page discover experience' })
+  getAgentExplore() {
+    return this.catalogService.getAgentExplore();
+  }
+
+  @Get('hero-onboarding')
+  @ApiOperation({ summary: 'Get landing hero guided onboarding steps' })
+  @ApiOkResponse({ description: 'Ordered questions and options for the home hero setup flow' })
+  getHeroOnboarding() {
+    return this.catalogService.getHeroOnboarding();
+  }
+
   @Get('research')
   @ApiOperation({ summary: 'Get research feed' })
   @ApiOkResponse({ description: 'List of research items from frontend data' })
   getResearch() {
     return this.catalogService.getResearch();
+  }
+
+  @Get('research/:id')
+  @ApiOperation({ summary: 'Get research article detail' })
+  @ApiOkResponse({ description: 'Full research entry including overview and findings' })
+  getResearchById(@Param('id') id: string) {
+    return this.catalogService.getResearchById(id);
   }
 }

@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { FiZap, FiCheck } from 'react-icons/fi';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
 
 interface AuthLeftPanelProps {
   mode: 'signin' | 'signup';
@@ -21,10 +22,10 @@ export default function AuthLeftPanel({ mode }: AuthLeftPanelProps) {
   const { t } = useTranslation();
 
   const FEATURES = [
-    { icon: '🧠', title: t('auth.features.models_title'), desc: t('auth.features.models_desc') },
-    { icon: '⚡', title: t('auth.features.deploy_title'), desc: t('auth.features.deploy_desc') },
-    { icon: '📊', title: t('auth.features.compare_title'), desc: t('auth.features.compare_desc') },
-    { icon: '🤖', title: t('auth.features.build_title'), desc: t('auth.features.build_desc') },
+    { icon: 'FiCpu', title: t('auth.features.models_title'), desc: t('auth.features.models_desc') },
+    { icon: 'FiZap', title: t('auth.features.deploy_title'), desc: t('auth.features.deploy_desc') },
+    { icon: 'FiBarChart2', title: t('auth.features.compare_title'), desc: t('auth.features.compare_desc') },
+    { icon: 'FiLayers', title: t('auth.features.build_title'), desc: t('auth.features.build_desc') },
   ];
 
   const TESTIMONIAL = {
@@ -99,8 +100,8 @@ export default function AuthLeftPanel({ mode }: AuthLeftPanelProps) {
       >
         {FEATURES.map((f) => (
           <motion.li key={f.title} variants={item} className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.1] flex items-center justify-center text-lg flex-shrink-0">
-              {f.icon}
+            <div className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.1] flex items-center justify-center flex-shrink-0 text-white">
+              <CatalogIcon name={f.icon} size={20} className="text-white" />
             </div>
             <div>
               <div className="text-[0.85rem] font-semibold text-white font-instrument">{f.title}</div>

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FiStar } from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import { Model } from '@/lib/api';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
 import { openModal } from '@/store/modalSlice';
 import { openApp } from '@/store/appSlice';
 import { setCurrentModelId } from '@/store/chatSlice';
@@ -46,10 +47,10 @@ export default function ModelCard({ model }: ModelCardProps) {
       <div className="flex items-start justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
           <div
-            className="w-9 h-9 sm:w-11 sm:h-11 rounded-[10px] sm:rounded-[11px] flex items-center justify-center text-lg sm:text-xl flex-shrink-0"
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-[10px] sm:rounded-[11px] flex items-center justify-center flex-shrink-0 text-text1"
             style={{ background: model.bg }}
           >
-            {model.icon}
+            <CatalogIcon name={model.icon} size={24} className="text-text1" />
           </div>
           <div className="min-w-0">
             <div className="font-syne font-semibold text-[0.9rem] sm:text-base text-text1 truncate" style={{ letterSpacing: '-0.02em' }}>
@@ -60,7 +61,7 @@ export default function ModelCard({ model }: ModelCardProps) {
         </div>
         {model.badge && (
           <span className={`text-[0.62rem] sm:text-[0.68rem] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ml-1 ${badgeStyles[model.badgeClass] || 'bg-gray-100 text-gray-600'}`}>
-            {model.badge === 'new' ? 'New' : model.badge === 'hot' ? '🔥 Hot' : model.badge === 'open' ? 'Open' : model.badge}
+            {model.badge === 'new' ? 'New' : model.badge === 'hot' ? 'Hot' : model.badge === 'open' ? 'Open' : model.badge}
           </span>
         )}
       </div>
@@ -70,7 +71,7 @@ export default function ModelCard({ model }: ModelCardProps) {
 
       {/* Tags */}
       <div className="flex gap-1 sm:gap-1.5 flex-wrap mb-3 sm:mb-4">
-        {model.tags.slice(0, 3).map((tag, i) => (
+        {(model.tags ?? []).slice(0, 3).map((tag, i) => (
           <span key={tag} className={`text-[0.62rem] sm:text-[0.7rem] px-1.5 sm:px-2 py-0.5 rounded-full font-medium ${tagColorList[i % 4]}`}>
             {tag}
           </span>

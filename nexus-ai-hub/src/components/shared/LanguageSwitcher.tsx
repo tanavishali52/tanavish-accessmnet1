@@ -11,10 +11,16 @@ const LANGUAGES = [
   { code: 'ur', name: 'اردو', flag: '🇵🇰' },
 ];
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({
+  variant = 'header',
+}: {
+  variant?: 'header' | 'sidebar' | 'sidebar-icon';
+}) {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const sidebar = variant === 'sidebar';
+  const sidebarIcon = variant === 'sidebar-icon';
 
   const currentLanguage = LANGUAGES.find((l) => l.code === i18n.language) || LANGUAGES[0];
 
@@ -37,29 +43,56 @@ export default function LanguageSwitcher() {
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div
+      className={`relative ${sidebar || sidebarIcon ? (sidebarIcon ? 'flex justify-center' : 'w-full') : ''}`}
+      ref={dropdownRef}
+    >
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/[0.08] hover:border-accent/30 transition-all bg-white/50 backdrop-blur-sm group"
+        title={currentLanguage.name}
+        aria-label={currentLanguage.name}
+        className={
+          sidebarIcon
+            ? 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/[0.1] bg-bg2/50 text-text2 transition-all hover:border-accent/30 hover:text-accent group'
+            : sidebar
+              ? 'flex w-full items-center justify-between gap-2 rounded-xl border border-black/[0.1] bg-bg2/50 px-3 py-2.5 transition-all hover:border-accent/30 group'
+              : 'flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/[0.08] hover:border-accent/30 transition-all bg-white/50 backdrop-blur-sm group'
+        }
       >
-        <FiGlobe size={14} className="text-text2 group-hover:text-accent transition-colors" />
-        <span className="text-[0.8rem] font-medium text-text1 font-instrument uppercase">
-          {currentLanguage.code}
-        </span>
-        <FiChevronDown 
-          size={12} 
-          className={`text-text2 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
-        />
+        <FiGlobe size={sidebarIcon ? 18 : 14} className="text-text2 group-hover:text-accent transition-colors shrink-0" />
+        {!sidebarIcon && (
+          <>
+            <span className="text-[0.8rem] font-medium text-text1 font-instrument uppercase truncate">
+              {currentLanguage.code}
+            </span>
+            <FiChevronDown
+              size={12}
+              className={`text-text2 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+            />
+          </>
+        )}
       </button>
+      {sidebarIcon && (
+        <span className="sr-only">
+          {currentLanguage.name}, change language
+        </span>
+      )}
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: sidebar || sidebarIcon ? 10 : 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute top-full mt-2 right-0 w-36 bg-white border border-black/[0.08] rounded-xl shadow-xl overflow-hidden z-[300]"
+            className={
+              sidebarIcon
+                ? 'absolute left-full bottom-0 ml-2 w-36 bg-white border border-black/[0.08] rounded-xl shadow-xl overflow-hidden z-[300]'
+                : sidebar
+                  ? 'absolute bottom-full left-0 right-0 mb-2 w-full bg-white border border-black/[0.08] rounded-xl shadow-xl overflow-hidden z-[300]'
+                  : 'absolute top-full mt-2 right-0 w-36 bg-white border border-black/[0.08] rounded-xl shadow-xl overflow-hidden z-[300]'
+            }
           >
             <div className="py-1">
               {LANGUAGES.map((lang) => (

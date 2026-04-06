@@ -5,15 +5,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setCurrentModelId } from '@/store/chatSlice';
 import { openApp, showToast } from '@/store/appSlice';
-import { FiSearch, FiPlus, FiLoader } from 'react-icons/fi';
+import { FiSearch, FiPlus } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
+import { ChatSidebarModelRowSkeleton } from '@/components/shared/catalogSkeletons';
 
 export default function ChatSidebar() {
   const { t } = useTranslation();
+  const router = useRouter();
   const dispatch = useDispatch();
   const currentModelId = useSelector((s: RootState) => s.chat.currentModelId);
   const { items: models, status } = useSelector((s: RootState) => s.models);
   const [search, setSearch] = useState('');
+
+  const catalogPending = status === 'loading' || (status === 'idle' && models.length === 0);
 
   const filtered = models.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -47,12 +53,14 @@ export default function ChatSidebar() {
 
       {/* Model list */}
       <div className="p-2 sm:p-3 flex-1">
-        {status === 'loading' && models.length === 0 && (
-          <div className="flex items-center justify-center py-8 text-text3 text-[0.78rem] gap-2">
-            <FiLoader size={13} className="animate-spin" /> {t('chat.sidebar.loading')}
+        {catalogPending &&
+          Array.from({ length: 8 }).map((_, i) => <ChatSidebarModelRowSkeleton key={i} />)}
+        {status === 'error' && models.length === 0 && (
+          <div className="px-2 py-6 text-center text-[0.78rem] text-text3 leading-relaxed">
+            Could not load models. Check your connection and refresh.
           </div>
         )}
-        {filtered.map((model) => (
+        {!catalogPending && filtered.map((model) => (
           <button
             key={model.id}
             onClick={() => handleSelect(model.id)}
@@ -62,10 +70,10 @@ export default function ChatSidebar() {
             style={{ borderRadius: 8 }}
           >
             <div
-              className="w-7 h-7 sm:w-[30px] sm:h-[30px] rounded-[7px] flex items-center justify-center text-[0.9rem] flex-shrink-0"
+              className="w-7 h-7 sm:w-[30px] sm:h-[30px] rounded-[7px] flex items-center justify-center flex-shrink-0 text-text1"
               style={{ background: model.bg }}
             >
-              {model.icon}
+              <CatalogIcon name={model.icon} size={18} />
             </div>
             <div className="overflow-hidden min-w-0">
               <div className="text-[0.78rem] sm:text-[0.82rem] font-medium text-text1 truncate">{model.name}</div>
@@ -81,7 +89,11 @@ export default function ChatSidebar() {
       {/* Create Agent */}
       <div className="p-3 sm:p-4 border-t border-black/[0.08]">
         <button
-          onClick={() => dispatch(openApp('agents'))}
+          type="button"
+          onClick={() => {
+            dispatch(openApp('agents'));
+            router.push('/agents');
+          }}
           className="w-full flex items-center justify-center gap-1.5 py-2 bg-accent-lt border border-accent/25 text-[0.75rem] sm:text-[0.78rem] text-accent font-medium hover:bg-accent hover:text-white transition-all cursor-pointer font-instrument"
           style={{ borderRadius: 8 }}
         >

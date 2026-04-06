@@ -1,22 +1,42 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+
+/** Build absolute URL for static files served by the API (e.g. `/uploads/images/photo.png`). */
+export function resolveApiPublicUrl(path: string): string {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const origin = API_BASE.replace(/\/?api\/?$/i, '');
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${origin}${p}`;
+}
 
 interface BackendResponse<T> {
   success: boolean;
-  message: string;
+  message: string | string[];
   data: T;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const isFormData =
+    typeof FormData !== 'undefined' && init?.body instanceof FormData;
+  const { headers: initHeaders, ...restInit } = init ?? {};
+  const headers = new Headers(initHeaders);
+  if (isFormData) {
+    headers.delete('Content-Type');
+  } else if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-    ...init,
+    ...restInit,
+    headers,
   });
 
   const body = (await res.json()) as BackendResponse<T>;
 
   if (!res.ok || !body.success) {
-    throw new Error(body.message || `Request failed (${res.status})`);
+    const msg = body.message;
+    const text = Array.isArray(msg) ? msg.join(', ') : (msg ?? `Request failed (${res.status})`);
+    throw new Error(text);
   }
 
   return body.data;
@@ -99,10 +119,25 @@ export interface AgentTemplate {
 }
 
 export interface ResearchItem {
+  id: string;
   date: string;
   org: string;
   title: string;
   summary: string;
+  category: string;
+}
+
+export interface ResearchDetail extends ResearchItem {
+  category: string;
+  longDate: string;
+  authorsLine: string;
+  overview: string;
+  metrics: { value: string; label: string }[];
+  keyFindings: string[];
+  modelsReferenced: { icon: string; name: string }[];
+  impact: string;
+  citation: string;
+  arxivId?: string;
 }
 
 export function apiModels() {
@@ -113,12 +148,65 @@ export function apiAgents() {
   return request<AgentTemplate[]>('/catalog/agents');
 }
 
+export type AgentExploreTabId =
+  | 'use_cases'
+  | 'build_business'
+  | 'learn'
+  | 'monitor'
+  | 'research'
+  | 'create'
+  | 'analyze';
+
+export interface AgentExploreTabDto {
+  id: AgentExploreTabId;
+  label: string;
+}
+
+export interface AgentExploreSuggestionDto {
+  icon: string;
+  text: string;
+}
+
+export interface AgentUseCaseAppDto {
+  name: string;
+  /** react-icons name, e.g. `FiZap` — resolved via CatalogIcon. */
+  icon: string;
+  type: string;
+  desc: string;
+}
+
+export interface AgentExplorePayload {
+  tabs: AgentExploreTabDto[];
+  suggestions: Record<AgentExploreTabId, AgentExploreSuggestionDto[]>;
+  useCaseApps: Record<AgentExploreTabId, AgentUseCaseAppDto[]>;
+}
+
+export function apiAgentExplore() {
+  return request<AgentExplorePayload>('/catalog/agent-explore');
+}
+
 export function apiLabs() {
   return request<Lab[]>('/catalog/labs');
 }
 
+export interface HeroOnboardStepDto {
+  k: string;
+  q: string;
+  hint: string;
+  /** react-icons name, e.g. `FiZap` — resolved in the hub via CatalogIcon. */
+  opts: { icon: string; l: string; sub: string }[];
+}
+
+export function apiHeroOnboarding() {
+  return request<HeroOnboardStepDto[]>('/catalog/hero-onboarding');
+}
+
 export function apiResearch() {
   return request<ResearchItem[]>('/catalog/research');
+}
+
+export function apiResearchDetail(id: string) {
+  return request<ResearchDetail>(`/catalog/research/${encodeURIComponent(id)}`);
 }
 
 // ── Agents ────────────────────────────────────────────────────────────────
@@ -130,6 +218,8 @@ export interface AgentRecord {
   modelId: string;
   systemPrompt: string;
   tools: string[];
+  /** none | short_term | short_and_long_term */
+  memoryMode?: string;
   status: 'draft' | 'active' | 'paused';
   createdAt: string;
   updatedAt: string;
@@ -151,6 +241,7 @@ export function apiCreateAgent(payload: {
   modelId: string;
   systemPrompt?: string;
   tools?: string[];
+  memoryMode?: string;
   status?: string;
 }) {
   return request<AgentRecord>('/agents', {
@@ -169,6 +260,7 @@ export function apiUpdateAgent(id: string, payload: Partial<{
   modelId: string;
   systemPrompt: string;
   tools: string[];
+  memoryMode: string;
   status: string;
 }>) {
   return request<AgentRecord>(`/agents/${id}`, {
@@ -200,6 +292,7 @@ export interface ChatContext {
 export interface ChatReply {
   text: string;
   recs: unknown[];
+  attachments?: ChatAttachmentType[];
 }
 
 // Chat Session Types
@@ -208,6 +301,8 @@ export interface ChatAttachmentType {
   name: string;
   size: number;
   type: string;
+  /** Relative path from API origin, e.g. `/uploads/voice/xyz.webm` */
+  url?: string;
 }
 
 export interface ModelRecommendationType {
@@ -241,11 +336,30 @@ export interface ChatSessionRecord {
 }
 
 // Existing endpoints
-export function apiChatMessage(message: string, context?: ChatContext) {
-  return request<ChatReply>('/chat/message', {
-    method: 'POST',
-    body: JSON.stringify({ message, context }),
-  });
+export function apiChatMessage(message: string, context?: ChatContext, attachments?: File[]) {
+  if (attachments && attachments.length > 0) {
+    // Send as FormData for file uploads
+    const formData = new FormData();
+    formData.append('message', message);
+    if (context) {
+      formData.append('context', JSON.stringify(context));
+    }
+    attachments.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    return request<ChatReply>('/chat/message', {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Let browser set Content-Type for FormData
+    });
+  } else {
+    // Send as JSON for text-only messages
+    return request<ChatReply>('/chat/message', {
+      method: 'POST',
+      body: JSON.stringify({ message, context }),
+    });
+  }
 }
 
 // New Session Management endpoints
@@ -262,12 +376,16 @@ export function apiCreateChatSession(payload: {
   });
 }
 
+function encPath(s: string) {
+  return encodeURIComponent(s);
+}
+
 export function apiGetChatSession(sessionId: string) {
-  return request<ChatSessionRecord>(`/chat/session/${sessionId}`);
+  return request<ChatSessionRecord>(`/chat/session/${encPath(sessionId)}`);
 }
 
 export function apiGetUserChats(userId: string) {
-  return request<ChatSessionRecord[]>(`/chat/sessions/${userId}`);
+  return request<ChatSessionRecord[]>(`/chat/sessions/${encPath(userId)}`);
 }
 
 export function apiUpdateChatSession(sessionId: string, payload: {
@@ -275,20 +393,20 @@ export function apiUpdateChatSession(sessionId: string, payload: {
   context?: ChatContext;
   currentModelId?: string;
 }) {
-  return request<ChatSessionRecord>(`/chat/session/${sessionId}`, {
+  return request<ChatSessionRecord>(`/chat/session/${encPath(sessionId)}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
 }
 
 export function apiDeleteChatSession(sessionId: string) {
-  return request<{ success: boolean }>(`/chat/session/${sessionId}`, {
+  return request<{ success: boolean }>(`/chat/session/${encPath(sessionId)}`, {
     method: 'DELETE',
   });
 }
 
 export function apiDeleteAllUserChats(userId: string) {
-  return request<{ success: boolean }>(`/chat/sessions/${userId}`, {
+  return request<{ success: boolean }>(`/chat/sessions/${encPath(userId)}`, {
     method: 'DELETE',
   });
 }
@@ -303,18 +421,21 @@ export function apiSaveChatMessage(
     attachments?: ChatAttachmentType[];
   },
 ) {
-  return request<ChatMessageRecord>(`/chat/session/${sessionId}/message`, {
+  return request<ChatMessageRecord>(`/chat/session/${encPath(sessionId)}/message`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 }
 
 export function apiGetChatMessages(sessionId: string) {
-  return request<ChatMessageRecord[]>(`/chat/session/${sessionId}/messages`);
+  return request<ChatMessageRecord[]>(`/chat/session/${encPath(sessionId)}/messages`);
 }
 
 export function apiDeleteChatMessage(messageId: string, sessionId: string) {
-  return request<{ success: boolean }>(`/chat/message/${messageId}/${sessionId}`, {
-    method: 'DELETE',
-  });
+  return request<{ success: boolean }>(
+    `/chat/message/${encPath(messageId)}/${encPath(sessionId)}`,
+    {
+      method: 'DELETE',
+    },
+  );
 }

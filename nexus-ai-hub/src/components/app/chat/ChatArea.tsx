@@ -9,16 +9,18 @@ import {
   setUserGoal, setUserAudience, setUserLevel, setUserBudget, setPendingRecs, setIsTyping,
 } from '@/store/chatSlice';
 import { openModal } from '@/store/modalSlice';
-import { apiChatMessage, Model } from '@/lib/api';
+import { apiChatMessage, resolveApiPublicUrl, Model } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
+import { FiStar } from 'react-icons/fi';
+import { CatalogIcon } from '@/components/shared/CatalogIcon';
 
 const getGoalTiles = (t: any) => [
-  { icon: '💬', label: t('chat.area.goals.chat'), value: 'Chat & Assistants' },
-  { icon: '💻', label: t('chat.area.goals.code'), value: 'Code & Dev' },
-  { icon: '🖼', label: t('chat.area.goals.image'), value: 'Image Generation' },
-  { icon: '📊', label: t('chat.area.goals.data'), value: 'Data Analysis' },
-  { icon: '✍️', label: t('chat.area.goals.writing'), value: 'Content Writing' },
-  { icon: '🤖', label: t('chat.area.goals.agents'), value: 'AI Agents' },
+  { icon: 'FiMessageCircle', label: t('chat.area.goals.chat'), value: 'Chat & Assistants' },
+  { icon: 'FiCode', label: t('chat.area.goals.code'), value: 'Code & Dev' },
+  { icon: 'FiImage', label: t('chat.area.goals.image'), value: 'Image Generation' },
+  { icon: 'FiBarChart2', label: t('chat.area.goals.data'), value: 'Data Analysis' },
+  { icon: 'FiEdit3', label: t('chat.area.goals.writing'), value: 'Content Writing' },
+  { icon: 'FiCpu', label: t('chat.area.goals.agents'), value: 'AI Agents' },
 ];
 
 const getOnboardQuestions = (t: any) => [
@@ -26,30 +28,30 @@ const getOnboardQuestions = (t: any) => [
     phase: 'audience',
     title: t('chat.onboarding.audience.title'),
     opts: [
-      { icon: '👤', label: t('chat.area.onboarding.audience.personal') },
-      { icon: '🏢', label: t('chat.area.onboarding.audience.business') },
-      { icon: '🏭', label: t('chat.area.onboarding.audience.enterprise') },
-      { icon: '🔬', label: t('chat.area.onboarding.audience.academic') },
+      { icon: 'FiUser', label: t('chat.area.onboarding.audience.personal') },
+      { icon: 'FiBriefcase', label: t('chat.area.onboarding.audience.business') },
+      { icon: 'FiLayers', label: t('chat.area.onboarding.audience.enterprise') },
+      { icon: 'FiBookOpen', label: t('chat.area.onboarding.audience.academic') },
     ],
   },
   {
     phase: 'level',
     title: t('chat.onboarding.level.title'),
     opts: [
-      { icon: '🌱', label: t('chat.area.onboarding.level.beginner') },
-      { icon: '📚', label: t('chat.area.onboarding.level.experience') },
-      { icon: '⚡', label: t('chat.area.onboarding.level.intermediate') },
-      { icon: '🚀', label: t('chat.area.onboarding.level.expert') },
+      { icon: 'FiSun', label: t('chat.area.onboarding.level.beginner') },
+      { icon: 'FiBookOpen', label: t('chat.area.onboarding.level.experience') },
+      { icon: 'FiZap', label: t('chat.area.onboarding.level.intermediate') },
+      { icon: 'FiTrendingUp', label: t('chat.area.onboarding.level.expert') },
     ],
   },
   {
     phase: 'budget',
     title: t('chat.onboarding.budget.title'),
     opts: [
-      { icon: '🆓', label: t('chat.area.onboarding.budget.free') },
-      { icon: '💵', label: t('chat.area.onboarding.budget.under50') },
-      { icon: '💰', label: t('chat.area.onboarding.budget.under500') },
-      { icon: '🏦', label: t('chat.area.onboarding.budget.over500') },
+      { icon: 'FiGift', label: t('chat.area.onboarding.budget.free') },
+      { icon: 'FiDollarSign', label: t('chat.area.onboarding.budget.under50') },
+      { icon: 'FiCreditCard', label: t('chat.area.onboarding.budget.under500') },
+      { icon: 'FiHome', label: t('chat.area.onboarding.budget.over500') },
     ],
   },
 ];
@@ -72,7 +74,7 @@ export default function ChatArea() {
   const getAiReplyLocal = (txt: string, catalog: Model[]): { text: string; recs?: Model[] } => {
     const textLow = txt.toLowerCase();
     if (textLow.includes('code') || textLow.includes('coding') || textLow.includes('programming'))
-      return { text: t('chat.sidebar.loading'), recs: catalog.filter((m) => m.types.includes('code')).slice(0, 3) };
+      return { text: t('chat.sidebar.loading'), recs: catalog.filter((m) => (m.types ?? []).includes('code')).slice(0, 3) };
     // ... Simplified for refactoring purposes, assuming apiChatMessage handles the actual complex logic
     return { text: `Results for "${txt}":`, recs: catalog.slice(0, 3) };
   };
@@ -154,8 +156,8 @@ export default function ChatArea() {
           className="bg-white border border-black/[0.08] w-full max-w-full sm:max-w-[600px] mx-auto shadow-md p-5 sm:p-8"
           style={{ borderRadius: 24 }}
         >
-          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-accent-lt to-accent/15 border-2 border-accent/25 rounded-full flex items-center justify-center text-xl sm:text-2xl mx-auto mb-3 sm:mb-4 animate-pulse">
-            ✦
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-accent-lt to-accent/15 border-2 border-accent/25 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 animate-pulse text-accent">
+            <FiStar size={30} strokeWidth={2} aria-hidden />
           </div>
           <h3 className="font-syne text-[1.1rem] sm:text-[1.3rem] font-bold text-text1 text-center mb-2" style={{ letterSpacing: '-0.02em' }}>
             {t('chat.area.welcome_title')}
@@ -174,7 +176,7 @@ export default function ChatArea() {
                   className="flex flex-col items-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 border border-black/[0.14] rounded-sm cursor-pointer transition-all bg-bg hover:border-accent"
                   style={{ borderRadius: 12 }}
                 >
-                  <span className="text-xl sm:text-2xl">{tile.icon}</span>
+                  <CatalogIcon name={tile.icon} size={28} className="text-accent" />
                   <span className="text-[0.72rem] sm:text-xs font-medium text-text2 text-center leading-tight">{tile.label}</span>
                 </motion.button>
               ))}
@@ -194,7 +196,7 @@ export default function ChatArea() {
             <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0 mt-0.5 ${
               msg.role === 'user' ? 'bg-accent text-white' : 'bg-accent-lt text-accent border border-accent/25 text-base'
             }`}>
-              {msg.role === 'user' ? 'U' : '✦'}
+              {msg.role === 'user' ? 'U' : <FiStar size={12} strokeWidth={2.5} aria-hidden />}
             </div>
             <div className="min-w-0 flex-1">
               <div
@@ -208,19 +210,54 @@ export default function ChatArea() {
                 {msg.content}
               </div>
               {msg.attachments && msg.attachments.length > 0 && (
-                <div className={`mt-1.5 flex flex-wrap gap-1.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  {msg.attachments.map((file) => (
-                    <div
-                      key={file.id}
-                      className={`px-2.5 py-1.5 rounded-full text-[0.68rem] font-instrument border ${
-                        msg.role === 'user'
-                          ? 'bg-white/15 border-white/25 text-white'
-                          : 'bg-bg border-black/[0.12] text-text2'
-                      }`}
-                    >
-                      {file.name}
-                    </div>
-                  ))}
+                <div className={`mt-1.5 flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-wrap gap-1.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.attachments.map((file) => {
+                      const src = file.url ? resolveApiPublicUrl(file.url) : '';
+                      const isImage = file.type.startsWith('image/') && src;
+                      const isAudio = file.type.startsWith('audio/') && src;
+                      if (isImage) {
+                        return (
+                          <a
+                            key={file.id}
+                            href={src}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block max-w-[220px] rounded-lg overflow-hidden border border-black/[0.12] bg-bg"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt={file.name} className="max-h-40 w-auto object-contain" />
+                          </a>
+                        );
+                      }
+                      if (isAudio) {
+                        return (
+                          <div key={file.id} className="max-w-full rounded-lg border border-black/[0.12] bg-bg p-2">
+                            <div className="text-[0.65rem] text-text3 mb-1 truncate max-w-[240px]">{file.name}</div>
+                            <audio controls src={src} className="w-full max-w-[280px] h-8" preload="metadata" />
+                          </div>
+                        );
+                      }
+                      return (
+                        <div
+                          key={file.id}
+                          className={`px-2.5 py-1.5 rounded-full text-[0.68rem] font-instrument border ${
+                            msg.role === 'user'
+                              ? 'bg-white/15 border-white/25 text-white'
+                              : 'bg-bg border-black/[0.12] text-text2'
+                          }`}
+                        >
+                          {file.url ? (
+                            <a href={resolveApiPublicUrl(file.url)} target="_blank" rel="noopener noreferrer" className="underline">
+                              {file.name}
+                            </a>
+                          ) : (
+                            file.name
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
               {/* Recs */}
@@ -234,8 +271,8 @@ export default function ChatArea() {
                       style={{ borderRadius: 12 }}
                       onClick={() => dispatch(openModal({ model: rec }))}
                     >
-                      <div className="w-8 h-8 rounded-[8px] flex items-center justify-center text-base flex-shrink-0" style={{ background: rec.bg }}>
-                        {rec.icon}
+                      <div className="w-8 h-8 rounded-[8px] flex items-center justify-center flex-shrink-0 text-text1" style={{ background: rec.bg }}>
+                        <CatalogIcon name={rec.icon} size={18} />
                       </div>
                       <div className="min-w-0">
                         <div className="text-[0.8rem] font-medium text-text1 truncate">{rec.name}</div>
@@ -263,7 +300,7 @@ export default function ChatArea() {
               className="flex items-center gap-2 px-3 py-2.5 border-[1.5px] border-black/[0.14] rounded-sm cursor-pointer bg-bg text-[0.78rem] sm:text-[0.8rem] font-medium text-text2 transition-all text-left font-instrument"
               style={{ borderRadius: 12 }}
             >
-              <span className="text-base flex-shrink-0">{opt.icon}</span>
+              <CatalogIcon name={opt.icon} size={17} className="flex-shrink-0 text-accent" />
               {opt.label}
             </motion.button>
           ))}
@@ -273,7 +310,9 @@ export default function ChatArea() {
       {/* Typing indicator */}
       {isTyping && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2.5 self-start">
-          <div className="w-8 h-8 rounded-full bg-accent-lt text-accent border border-accent/25 flex items-center justify-center text-base">✦</div>
+          <div className="w-8 h-8 rounded-full bg-accent-lt text-accent border border-accent/25 flex items-center justify-center">
+            <FiStar size={14} strokeWidth={2.5} aria-hidden />
+          </div>
           <div className="bg-white border border-black/[0.08] rounded-lg px-4 py-3 flex items-center gap-1.5" style={{ borderRadius: 12 }}>
             {[0, 0.2, 0.4].map((d, i) => (
               <motion.span key={i} animate={{ y: [0, -6, 0] }} transition={{ duration: 1.2, repeat: Infinity, delay: d }}
