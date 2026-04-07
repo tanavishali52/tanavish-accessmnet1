@@ -73,16 +73,23 @@ export default function ResearchView() {
     <div className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8 bg-bg">
       <div className="max-w-full sm:max-w-2xl md:max-w-3xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-6">
-          <div>
-            <h2 className="font-syne text-[1.3rem] sm:text-[1.6rem] font-bold text-text1" style={{ letterSpacing: '-0.03em' }}>
-              AI Research Feed
-            </h2>
-            <p className="text-[0.8rem] sm:text-[0.85rem] text-text2 mt-1">Latest papers, releases & breakthroughs.</p>
-          </div>
-          <div className="flex items-center gap-1.5 bg-white border border-black/[0.08] rounded-full px-3 py-1.5 text-[0.72rem] sm:text-[0.75rem] text-text2 shadow-card self-start sm:self-auto">
-            <span className="w-1.5 h-1.5 bg-green rounded-full animate-pulse flex-shrink-0" />
-            Live updates
+        <div className="mb-5 sm:mb-6 rounded-2xl border border-black/[0.08] bg-white px-4 py-4 sm:px-5 sm:py-5 shadow-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span className="inline-flex items-center rounded-full bg-blue-lt text-blue px-2.5 py-1 text-[0.65rem] sm:text-[0.68rem] font-semibold tracking-wide uppercase">
+                Research feed
+              </span>
+              <h2 className="font-syne text-[1.3rem] sm:text-[1.6rem] font-bold text-text1 mt-2" style={{ letterSpacing: '-0.03em' }}>
+                New model releases
+              </h2>
+              <p className="text-[0.8rem] sm:text-[0.85rem] text-text2 mt-1">
+                Latest papers, launches, and AI breakthroughs.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 bg-bg2 border border-black/[0.08] rounded-full px-3 py-1.5 text-[0.72rem] sm:text-[0.75rem] text-text2 self-start sm:self-auto">
+              <span className="w-1.5 h-1.5 bg-green rounded-full animate-pulse flex-shrink-0" />
+              Live updates
+            </div>
           </div>
         </div>
 
