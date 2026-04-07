@@ -16,6 +16,46 @@ import { setSession } from '@/store/authSlice';
 import type { RootState } from '@/store';
 import { apiSession, apiGuest } from '@/lib/api';
 
+const USER_STORAGE_KEY = 'nexusai:user';
+
+interface StoredGuestSession {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  guestMode: true;
+}
+
+const getStoredGuestSession = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      id?: string;
+      name?: string;
+      email?: string;
+      avatar?: string;
+      plan?: 'free' | 'pro' | 'enterprise';
+      guestMode?: boolean;
+    };
+    if (!parsed?.guestMode || !parsed.id || !parsed.name || !parsed.email || !parsed.plan) {
+      return null;
+    }
+    return {
+      id: parsed.id,
+      name: parsed.name,
+      email: parsed.email,
+      avatar: parsed.avatar,
+      plan: parsed.plan,
+      guestMode: true,
+    } satisfies StoredGuestSession;
+  } catch {
+    return null;
+  }
+};
+
 export default function AppWorkspace({ tab, requireMember }: { tab: ActiveTab; requireMember?: boolean }) {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -32,6 +72,18 @@ export default function AppWorkspace({ tab, requireMember }: { tab: ActiveTab; r
 
     const hydrateSession = async () => {
       const applyGuest = async () => {
+        const storedGuest = getStoredGuestSession();
+        if (storedGuest) {
+          dispatch(setSession({
+            id: storedGuest.id,
+            name: storedGuest.name,
+            email: storedGuest.email,
+            avatar: storedGuest.avatar ?? storedGuest.name[0]?.toUpperCase() ?? 'G',
+            plan: storedGuest.plan,
+            guestMode: true,
+          }));
+          return;
+        }
         try {
           const guestUser = await apiGuest();
           if (cancelled) return;

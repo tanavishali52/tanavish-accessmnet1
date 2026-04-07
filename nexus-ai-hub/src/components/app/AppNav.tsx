@@ -100,7 +100,9 @@ export default function AppNav() {
 
   return (
     <div
-      className={`relative z-[100] flex h-auto min-h-0 shrink-0 flex-col border-black/[0.08] transition-[width] duration-200 ease-out md:h-full md:border-r md:bg-white ${
+      className={`relative z-[100] flex h-auto min-h-0 shrink-0 flex-col border-black/[0.08] transition-[width] duration-200 ease-out md:h-full md:border-r ${
+        col ? 'md:bg-[linear-gradient(180deg,#1F2937_0%,#111827_100%)]' : 'md:bg-white'
+      } ${
         col ? 'md:w-[76px]' : 'md:w-[260px] lg:w-[272px]'
       }`}
     >
@@ -249,7 +251,11 @@ export default function AppNav() {
         </nav>
 
         <div
-          className={`mt-auto space-y-2 border-t border-black/[0.08] bg-gradient-to-t from-bg2/30 to-white px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom,0px))] md:space-y-2 md:px-3 md:pb-3 ${col ? 'md:flex md:flex-col md:items-center md:px-2 md:pb-[max(12px,env(safe-area-inset-bottom,0px))]' : ''}`}
+          className={`mt-auto space-y-2 border-t border-black/[0.08] bg-gradient-to-t from-bg2/30 to-white px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom,0px))] md:space-y-2 md:px-3 md:pb-3 ${
+            col
+              ? 'md:flex md:flex-col md:items-center md:px-2 md:pb-[max(12px,env(safe-area-inset-bottom,0px))] md:bg-[linear-gradient(180deg,#1F2937_0%,#111827_100%)]'
+              : ''
+          }`}
         >
           {col ? (
             <>

@@ -48,6 +48,20 @@ interface ChatState {
   hasUnsavedChanges: boolean; // Track if there are unsaved messages
 }
 
+export interface PersistedChatState {
+  currentSessionId: string | null;
+  sessions: ChatSession[];
+  messages: ChatMessage[];
+  onboardPhase: OnboardPhase;
+  obDone: boolean;
+  userGoal: string;
+  userAudience: string;
+  userLevel: string;
+  userBudget: string;
+  currentModelId: string;
+  pendingRecs: Model[];
+}
+
 const initialState: ChatState = {
   currentSessionId: null,
   sessions: [],
@@ -70,6 +84,24 @@ const chatSlice = createSlice({
   name: 'chat',
   initialState,
   reducers: {
+    hydrateChatState(state, action: PayloadAction<PersistedChatState>) {
+      const payload = action.payload;
+      state.currentSessionId = payload.currentSessionId;
+      state.sessions = payload.sessions;
+      state.messages = payload.messages;
+      state.onboardPhase = payload.onboardPhase;
+      state.obDone = payload.obDone;
+      state.userGoal = payload.userGoal;
+      state.userAudience = payload.userAudience;
+      state.userLevel = payload.userLevel;
+      state.userBudget = payload.userBudget;
+      state.currentModelId = payload.currentModelId;
+      state.pendingRecs = payload.pendingRecs;
+      state.isTyping = false;
+      state.isSaving = false;
+      state.hasUnsavedChanges = false;
+      state.pendingAutoMessage = null;
+    },
     // Session Management
     setCurrentSessionId(state, action: PayloadAction<string | null>) {
       state.currentSessionId = action.payload;
@@ -162,6 +194,7 @@ const chatSlice = createSlice({
 });
 
 export const {
+  hydrateChatState,
   setCurrentSessionId,
   setSessions,
   addSession,

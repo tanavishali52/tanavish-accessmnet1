@@ -1,7 +1,23 @@
 import { configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit';
 import appReducer from './appSlice';
 import chatReducer from './chatSlice';
-import { addSession, setCurrentSessionId, resetChat } from './chatSlice';
+import {
+  addSession,
+  setCurrentSessionId,
+  resetChat,
+  addMessage,
+  setMessages,
+  setOnboardPhase,
+  setObDone,
+  setUserGoal,
+  setUserAudience,
+  setUserLevel,
+  setUserBudget,
+  setCurrentModelId,
+  setPendingRecs,
+  clearMessages,
+  type PersistedChatState,
+} from './chatSlice';
 import modelsReducer from './modelsSlice';
 import modalReducer from './modalSlice';
 import authReducer, { setSession, logout, loginSuccess, signupSuccess, type AuthUser } from './authSlice';
@@ -9,6 +25,7 @@ import agentReducer from './agentSlice';
 import { CHAT_SESSION_STORAGE_KEY } from '@/lib/chatStorageKeys';
 
 const listenerMiddleware = createListenerMiddleware();
+const CHAT_STATE_STORAGE_PREFIX = 'nexusai:chatState:';
 
 listenerMiddleware.startListening({
   matcher: isAnyOf(setSession, loginSuccess, signupSuccess, logout),
@@ -51,6 +68,44 @@ listenerMiddleware.startListening({
       .currentSessionId;
     if (id) window.localStorage.setItem(CHAT_SESSION_STORAGE_KEY, id);
     else window.localStorage.removeItem(CHAT_SESSION_STORAGE_KEY);
+  },
+});
+
+listenerMiddleware.startListening({
+  matcher: isAnyOf(
+    addMessage,
+    setMessages,
+    setOnboardPhase,
+    setObDone,
+    setUserGoal,
+    setUserAudience,
+    setUserLevel,
+    setUserBudget,
+    setCurrentModelId,
+    setPendingRecs,
+    clearMessages,
+    addSession,
+    setCurrentSessionId,
+    resetChat,
+  ),
+  effect: (action, api) => {
+    if (typeof window === 'undefined') return;
+    const state = api.getState() as {
+      auth: { user: { id: string } | null };
+      chat: PersistedChatState;
+    };
+    const userId = state.auth.user?.id;
+    if (!userId) return;
+    const key = `${CHAT_STATE_STORAGE_PREFIX}${userId}`;
+    if (resetChat.match(action)) {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    try {
+      window.localStorage.setItem(key, JSON.stringify(state.chat));
+    } catch {
+      /* quota */
+    }
   },
 });
 

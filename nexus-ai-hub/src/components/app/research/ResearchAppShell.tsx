@@ -9,6 +9,46 @@ import Toast from '@/components/shared/Toast';
 import { setSession } from '@/store/authSlice';
 import { apiSession, apiGuest } from '@/lib/api';
 
+const USER_STORAGE_KEY = 'nexusai:user';
+
+interface StoredGuestSession {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  guestMode: true;
+}
+
+const getStoredGuestSession = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      id?: string;
+      name?: string;
+      email?: string;
+      avatar?: string;
+      plan?: 'free' | 'pro' | 'enterprise';
+      guestMode?: boolean;
+    };
+    if (!parsed?.guestMode || !parsed.id || !parsed.name || !parsed.email || !parsed.plan) {
+      return null;
+    }
+    return {
+      id: parsed.id,
+      name: parsed.name,
+      email: parsed.email,
+      avatar: parsed.avatar,
+      plan: parsed.plan,
+      guestMode: true,
+    } satisfies StoredGuestSession;
+  } catch {
+    return null;
+  }
+};
+
 export default function ResearchAppShell({ children }: { children: ReactNode }) {
   const dispatch = useDispatch();
 
@@ -27,6 +67,20 @@ export default function ResearchAppShell({ children }: { children: ReactNode }) 
             }),
           );
         } else {
+          const storedGuest = getStoredGuestSession();
+          if (storedGuest) {
+            dispatch(
+              setSession({
+                id: storedGuest.id,
+                name: storedGuest.name,
+                email: storedGuest.email,
+                avatar: storedGuest.avatar ?? storedGuest.name[0]?.toUpperCase() ?? 'G',
+                plan: storedGuest.plan,
+                guestMode: true,
+              }),
+            );
+            return;
+          }
           apiGuest()
             .then((guestUser) => {
               dispatch(
@@ -48,6 +102,20 @@ export default function ResearchAppShell({ children }: { children: ReactNode }) 
       })
       .catch((err) => {
         console.warn('Session check failed, trying guest:', err);
+        const storedGuest = getStoredGuestSession();
+        if (storedGuest) {
+          dispatch(
+            setSession({
+              id: storedGuest.id,
+              name: storedGuest.name,
+              email: storedGuest.email,
+              avatar: storedGuest.avatar ?? storedGuest.name[0]?.toUpperCase() ?? 'G',
+              plan: storedGuest.plan,
+              guestMode: true,
+            }),
+          );
+          return;
+        }
         apiGuest()
           .then((guestUser) => {
             dispatch(
