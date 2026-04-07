@@ -66,7 +66,7 @@ export default function ResearchDetailView({ articleId }: { articleId: string })
 
   return (
     <div className="flex-1 overflow-y-auto bg-bg">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8 pb-36">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8 pb-52 sm:pb-40">
         <Link
           href="/research"
           className="inline-flex items-center gap-1.5 text-[0.82rem] text-accent font-medium mb-6 hover:text-accent2 transition-colors"
@@ -148,7 +148,7 @@ export default function ResearchDetailView({ articleId }: { articleId: string })
             </div>
           </section>
 
-          <section className="mb-4">
+          <section className="mb-8">
             <h2 className="text-[0.7rem] font-semibold text-text3 uppercase tracking-widest mb-3">Citation</h2>
             <div className="rounded-xl bg-bg2 border border-black/[0.08] px-4 py-3 flex flex-col sm:flex-row sm:items-start gap-3">
               <p className="text-[0.8rem] text-text2 leading-relaxed flex-1 font-mono">{article.citation}</p>
@@ -181,7 +181,7 @@ export default function ResearchDetailView({ articleId }: { articleId: string })
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={goChatHub}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 min-h-[48px] px-8 rounded-full bg-[#B45309] hover:bg-[#92400E] text-white text-[0.88rem] font-semibold border-none cursor-pointer shadow-lg font-instrument"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 min-h-[48px] px-8 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-[0.88rem] font-semibold border-none cursor-pointer shadow-lg font-instrument whitespace-nowrap"
             style={{ maxWidth: 420 }}
           >
             <FiMessageCircle size={18} />
